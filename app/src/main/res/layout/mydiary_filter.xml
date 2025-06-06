@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="32dp"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="8dp">
+
+<!--    <LinearLayout-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:orientation="vertical"-->
+<!--        android:padding="24dp">-->
+
+<!--        <LinearLayout-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:gravity="center_vertical">-->
+
+<!--            <TextView-->
+<!--                android:layout_width="0dp"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:layout_weight="1"-->
+<!--                android:text="보고 싶은 일기 선택"-->
+<!--                android:textColor="@color/textPrimary"-->
+<!--                android:textSize="18sp"-->
+<!--                android:textStyle="bold" />-->
+
+<!--            <ImageButton-->
+<!--                android:id="@+id/btnClose"-->
+<!--                android:layout_width="48dp"-->
+<!--                android:layout_height="48dp"-->
+<!--                android:background="?attr/selectableItemBackgroundBorderless"-->
+<!--                android:src="@drawable/ic_close"-->
+<!--                android:contentDescription="필터 닫기"/>-->
+<!--        </LinearLayout>-->
+
+<!--        <TextView-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_marginTop="24dp"-->
+<!--            android:text="그룹 선택"-->
+<!--            android:textColor="@color/textPrimary"-->
+<!--            android:textSize="16sp"-->
+<!--            android:textStyle="bold" />-->
+
+<!--        <RadioGroup-->
+<!--            android:id="@+id/rgGroupFilter"-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_marginTop="8dp">-->
+
+<!--            <RadioButton-->
+<!--                android:id="@+id/rbAllGroups"-->
+<!--                android:layout_width="match_parent"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:checked="true"-->
+<!--                android:text="전체 그룹"-->
+<!--                android:textColor="@color/textPrimary" />-->
+
+<!--            <RadioButton-->
+<!--                android:id="@+id/rbSelectGroup"-->
+<!--                android:layout_width="match_parent"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:text="특정 그룹 선택"-->
+<!--                android:textColor="@color/textPrimary" />-->
+
+<!--        </RadioGroup>-->
+
+<!--        <Spinner-->
+<!--            android:id="@+id/spinnerGroups"-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_marginTop="8dp"-->
+<!--            android:visibility="gone" />-->
+
+<!--        <TextView-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_marginTop="24dp"-->
+<!--            android:text="날짜 선택"-->
+<!--            android:textColor="@color/textPrimary"-->
+<!--            android:textSize="16sp"-->
+<!--            android:textStyle="bold" />-->
+
+<!--        <RadioGroup-->
+<!--            android:id="@+id/rgDateFilter"-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_marginTop="8dp">-->
+
+<!--            <RadioButton-->
+<!--                android:id="@+id/rbSpecificDate"-->
+<!--                android:layout_width="match_parent"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:checked="true"-->
+<!--                android:text="특정 날짜"-->
+<!--                android:textColor="@color/textPrimary" />-->
+
+<!--            <RadioButton-->
+<!--                android:id="@+id/rbDateRange"-->
+<!--                android:layout_width="match_parent"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:text="기간 선택"-->
+<!--                android:textColor="@color/textPrimary" />-->
+
+<!--        </RadioGroup>-->
+
+<!--        <CalendarView-->
+<!--            android:id="@+id/calendarView"-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_marginTop="8dp"-->
+<!--            android:background="@android:color/white"-->
+<!--            android:dateTextAppearance="@style/CalendarDateText"-->
+<!--            android:theme="@style/CalendarTheme"-->
+<!--            android:weekDayTextAppearance="@style/CalendarWeekText" />-->
+
+<!--        <LinearLayout-->
+<!--            android:id="@+id/dateRangeContainer"-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_marginTop="8dp"-->
+<!--            android:orientation="horizontal"-->
+<!--            android:visibility="gone">-->
+
+<!--            <TextView-->
+<!--                android:id="@+id/tvStartDate"-->
+<!--                android:layout_width="0dp"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:layout_weight="1"-->
+<!--                android:gravity="center"-->
+<!--                android:padding="12dp"-->
+<!--                android:text="시작일 선택"-->
+<!--                android:textColor="@color/textPrimary" />-->
+
+<!--            <TextView-->
+<!--                android:layout_width="wrap_content"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:layout_marginHorizontal="8dp"-->
+<!--                android:text="~"-->
+<!--                android:textColor="@color/textPrimary"-->
+<!--                android:textSize="16sp" />-->
+
+<!--            <TextView-->
+<!--                android:id="@+id/tvEndDate"-->
+<!--                android:layout_width="0dp"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:layout_weight="1"-->
+<!--                android:gravity="center"-->
+<!--                android:padding="12dp"-->
+<!--                android:text="종료일 선택"-->
+<!--                android:textColor="@color/textPrimary" />-->
+
+<!--        </LinearLayout>-->
+
+<!--        <com.google.android.material.button.MaterialButton-->
+<!--            android:id="@+id/btnApplyFilter"-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_marginTop="24dp"-->
+<!--            android:backgroundTint="@color/accent"-->
+<!--            android:padding="12dp"-->
+<!--            android:text="필터 적용하기"-->
+<!--            android:textColor="@android:color/white"-->
+<!--            android:textSize="16sp"-->
+<!--            app:cornerRadius="8dp" />-->
+
+<!--    </LinearLayout>-->
+
+</androidx.cardview.widget.CardView> 

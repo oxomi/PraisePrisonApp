@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Primary Colors -->
+    <color name="primary">#F2C94C</color>
+
+    <!-- Accent Color -->
+    <color name="accent">#F69F65</color>
+
+    <!-- Background -->
+    <color name="background">#F6F1E3</color>
+    <color name="white">#FFFFFF</color>
+
+    <!-- Text Colors -->
+    <color name="textPrimary">#333333</color>
+    <color name="textSecondary">#666666</color>
+
+    <!-- Positive Keyword -->
+    <color name="positiveKeyword">#7BBF8B</color>
+
+    <!-- Error -->
+    <color name="error">#E57373</color>
+</resources>

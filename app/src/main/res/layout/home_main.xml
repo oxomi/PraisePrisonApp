@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background">
+
+    <!-- AppBarLayout for toolbar + toggle -->
+    <com.google.android.material.appbar.AppBarLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/background"
+        app:elevation="0dp"
+        android:stateListAnimator="@null">
+
+        <!-- Custom Toolbar -->
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:background="@color/background"
+            app:layout_scrollFlags="noScroll">
+
+            <!-- Title aligned to start -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:text="칭찬감옥"
+                android:layout_marginLeft="8dp"
+                android:textColor="@color/textPrimary"
+                android:textSize="22sp"
+                android:textStyle="bold" />
+
+            <!-- Floating style ImageButton aligned to end -->
+            <ImageButton
+                android:id="@+id/btnCreateGroup"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_gravity="end|center_vertical"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_addbutton"
+                android:scaleType="centerInside"
+                android:contentDescription="그룹 추가 버튼" />
+
+        </androidx.appcompat.widget.Toolbar>
+
+        <!-- Segmented Control: MaterialButtonToggleGroup -->
+        <com.google.android.material.button.MaterialButtonToggleGroup
+            android:id="@+id/toggleGroup"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="8dp"
+            app:singleSelection="true"
+            app:selectionRequired="true"
+            app:checkedButton="@id/btnMyGroup"
+            android:background="@drawable/toggle_group_background"
+            app:layout_scrollFlags="noScroll">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnMyGroup"
+                style="@style/Widget.Material3.Button"
+                android:layout_width="wrap_content"
+                android:layout_height="48dp"
+                android:text="내 그룹"
+                android:textColor="@color/textPrimary"
+                app:backgroundTint="@android:color/white"
+                app:strokeWidth="0dp"
+                app:rippleColor="@android:color/transparent"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnAllGroup"
+                style="@style/Widget.Material3.Button"
+                android:layout_width="wrap_content"
+                android:layout_height="48dp"
+                android:text="전체 그룹"
+                android:textColor="@color/textPrimary"
+                app:backgroundTint="@android:color/transparent"
+                app:strokeWidth="0dp"
+                app:rippleColor="@android:color/transparent"/>
+
+        </com.google.android.material.button.MaterialButtonToggleGroup>
+
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <!-- Content: ViewPager2 with appbar scrolling -->
+    <androidx.viewpager2.widget.ViewPager2
+        android:id="@+id/viewPager"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:overScrollMode="never"
+        android:background="@color/background"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior" />
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

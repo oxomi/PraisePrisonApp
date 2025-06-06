@@ -1,0 +1,32 @@
+# Gradle cache
+.gradle/
+
+# Build output
+build/
+*/build/
+
+# IDE settings
+.idea/gradle.xml
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/dictionaries
+.idea/libraries
+
+# IDE - IntelliJ IDEA
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Logs
+*.log
+
+# OS specific
+.DS_Store
+Thumbs.db
+
+# Firebase configuration files
+google-services.json
+praiseprisonapp-firebase-adminsdk-fbsvc-4432d541d7.json
+praiseprisonapp-firebase-adminsdk-fbsvc-*.json
+*firebase-adminsdk*.json

@@ -1,0 +1,90 @@
+# Built application files
+*.apk
+*.aar
+*.ap_
+*.aab
+
+# Files for the ART/Dalvik VM
+*.dex
+
+# Java class files
+*.class
+
+# Generated files
+bin/
+gen/
+out/
+
+# Gradle files
+.gradle/
+build/
+*.lock
+.gradle.kts
+
+# Local configuration file
+local.properties
+
+# Android Studio
+*.iml
+.idea/
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/gradle.xml
+.idea/assetWizardSettings.xml
+.idea/dictionaries
+.idea/libraries
+.idea/caches
+.idea/modules.xml
+.idea/navEditor.xml
+
+# External native build folder
+.externalNativeBuild
+.cxx/
+
+# Version control
+vcs.xml
+
+# Keystore files
+*.jks
+*.keystore
+
+# Google Services (e.g. APIs or Firebase)
+app/google-services.json
+app/praiseprisonapp-firebase-adminsdk-fbsvc-4432d541d7.json
+app/praiseprisonapp-firebase-adminsdk-fbsvc-*.json
+
+# Android Profiling
+*.hprof
+
+# Gradle wrapper
+!gradle/wrapper/gradle-wrapper.jar
+!gradle/wrapper/gradle-wrapper.properties
+
+# Log Files
+*.log
+
+# OS-specific files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Firebase Admin SDK key
+*firebase-adminsdk*.json
+
+# Android Studio generated
+captures/
+.navigation/
+output.json
+
+# NDK
+obj/
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*~
