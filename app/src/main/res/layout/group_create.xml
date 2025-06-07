@@ -8,188 +8,185 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="16dp">
+        android:orientation="vertical">
 
         <!-- 상단 툴바 -->
         <androidx.appcompat.widget.Toolbar
             android:id="@+id/toolbar"
-            android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize"
-            android:background="@color/background">
+            style="@style/CustomToolbarStyle"
+            app:title="새 그룹 만들기"
+            app:navigationIcon="@drawable/ic_back" />
 
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <!-- 그룹 이미지 선택 -->
+            <androidx.cardview.widget.CardView
+                android:id="@+id/imagePickerCard"
+                android:layout_width="match_parent"
+                android:layout_height="200dp"
+                android:layout_marginTop="16dp"
+                app:cardCornerRadius="8dp"
+                app:cardElevation="0dp">
+
+                <ImageView
+                    android:id="@+id/groupImage"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:scaleType="centerCrop"/>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="#B0FAFAFA"
+                    android:gravity="center"
+                    android:orientation="vertical">
+
+                    <ImageView
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:src="@drawable/ic_picture" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="그룹 이미지 선택"
+                        android:textColor="@color/textSecondary" />
+
+                </LinearLayout>
+
+            </androidx.cardview.widget.CardView>
+
+            <!-- 그룹명 입력 -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:hint="그룹명"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                app:boxStrokeWidth="2dp"
+                app:boxStrokeColor="@color/accent"
+                app:hintTextColor="@color/accent"
+                app:boxStrokeWidthFocused="2dp">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/groupNameInput"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:maxLength="20"
+                    android:textColor="@color/textPrimary"
+                    android:textCursorDrawable="@color/textSecondary" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- 그룹 설명 입력 -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:hint="그룹 설명"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                app:boxStrokeWidth="2dp"
+                app:boxStrokeColor="@color/accent"
+                app:hintTextColor="@color/accent"
+                app:boxStrokeWidthFocused="2dp">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/groupDescriptionInput"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="top"
+                    android:lines="3"
+                    android:maxLength="100"
+                    android:textColor="@color/textPrimary"
+                    android:textCursorDrawable="@color/textSecondary" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- 공개 설정 -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="새 그룹 만들기"
+                android:layout_marginTop="24dp"
+                android:text="공개 설정"
                 android:textColor="@color/textPrimary"
-                android:textSize="20sp"
+                android:textSize="16sp"
                 android:textStyle="bold" />
 
-        </androidx.appcompat.widget.Toolbar>
-
-        <!-- 그룹 이미지 선택 -->
-        <androidx.cardview.widget.CardView
-            android:id="@+id/imagePickerCard"
-            android:layout_width="match_parent"
-            android:layout_height="200dp"
-            android:layout_marginTop="16dp"
-            app:cardCornerRadius="8dp"
-            app:cardElevation="0dp">
-
-            <ImageView
-                android:id="@+id/groupImage"
+            <RadioGroup
+                android:id="@+id/visibilityGroup"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:scaleType="centerCrop"/>
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:orientation="horizontal">
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="#B0FAFAFA"
-                android:gravity="center"
-                android:orientation="vertical">
-
-                <ImageView
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:src="@drawable/ic_picture" />
-
-                <TextView
+                <com.google.android.material.radiobutton.MaterialRadioButton
+                    android:id="@+id/publicGroup"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:text="그룹 이미지 선택"
-                    android:textColor="@color/textSecondary" />
+                    android:checked="true"
+                    android:layout_marginEnd="16dp"
+                    android:text="전체공개"
+                    android:textColor="@color/textPrimary"
+                    android:textSize="16sp"
+                    android:buttonTint="@color/accent" />
 
-            </LinearLayout>
+                <com.google.android.material.radiobutton.MaterialRadioButton
+                    android:id="@+id/privateGroup"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="16dp"
+                    android:text="일부공개"
+                    android:textColor="@color/textPrimary"
+                    android:textSize="16sp"
+                    android:buttonTint="@color/accent" />
 
-        </androidx.cardview.widget.CardView>
+            </RadioGroup>
 
-        <!-- 그룹명 입력 -->
-        <com.google.android.material.textfield.TextInputLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:hint="그룹명"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-            app:boxStrokeWidth="2dp"
-            app:boxStrokeColor="@color/accent"
-            app:hintTextColor="@color/accent"
-            app:boxStrokeWidthFocused="2dp">
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/groupNameInput"
+            <!-- 비밀번호 입력 (일부공개 선택 시 표시) -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/passwordLayout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:maxLength="20"
-                android:textColor="@color/textPrimary"
-                android:textCursorDrawable="@color/textSecondary" />
+                android:layout_marginTop="16dp"
+                android:hint="그룹 비밀번호"
+                android:visibility="gone"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                app:boxStrokeWidth="2dp"
+                app:boxStrokeColor="@color/accent"
+                app:hintTextColor="@color/accent"
+                app:boxStrokeWidthFocused="2dp"
+                app:endIconMode="password_toggle"
+                app:endIconTint="@color/textPrimary">
 
-        </com.google.android.material.textfield.TextInputLayout>
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/passwordInput"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textPassword"
+                    android:maxLength="20"
+                    android:textColor="@color/textPrimary"
+                    android:textCursorDrawable="@color/textSecondary" />
 
-        <!-- 그룹 설명 입력 -->
-        <com.google.android.material.textfield.TextInputLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:hint="그룹 설명"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-            app:boxStrokeWidth="2dp"
-            app:boxStrokeColor="@color/accent"
-            app:hintTextColor="@color/accent"
-            app:boxStrokeWidthFocused="2dp">
+            </com.google.android.material.textfield.TextInputLayout>
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/groupDescriptionInput"
+            <!-- 생성 버튼 -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/createButton"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:gravity="top"
-                android:lines="3"
-                android:maxLength="100"
-                android:textColor="@color/textPrimary"
-                android:textCursorDrawable="@color/textSecondary" />
-
-        </com.google.android.material.textfield.TextInputLayout>
-
-        <!-- 공개 설정 -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:text="공개 설정"
-            android:textColor="@color/textPrimary"
-            android:textSize="16sp"
-            android:textStyle="bold" />
-
-        <RadioGroup
-            android:id="@+id/visibilityGroup"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:orientation="horizontal">
-
-            <com.google.android.material.radiobutton.MaterialRadioButton
-                android:id="@+id/publicGroup"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:checked="true"
-                android:layout_marginEnd="16dp"
-                android:text="전체공개"
-                android:textColor="@color/textPrimary"
+                android:layout_marginTop="32dp"
+                android:paddingVertical="12dp"
+                android:backgroundTint="@color/accent"
+                android:text="그룹 만들기"
                 android:textSize="16sp"
-                android:buttonTint="@color/accent" />
+                app:cornerRadius="8dp" />
 
-            <com.google.android.material.radiobutton.MaterialRadioButton
-                android:id="@+id/privateGroup"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="16dp"
-                android:text="일부공개"
-                android:textColor="@color/textPrimary"
-                android:textSize="16sp"
-                android:buttonTint="@color/accent" />
-
-        </RadioGroup>
-
-        <!-- 비밀번호 입력 (일부공개 선택 시 표시) -->
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/passwordLayout"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:hint="그룹 비밀번호"
-            android:visibility="gone"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-            app:boxStrokeWidth="2dp"
-            app:boxStrokeColor="@color/accent"
-            app:hintTextColor="@color/accent"
-            app:boxStrokeWidthFocused="2dp"
-            app:endIconMode="password_toggle"
-            app:endIconTint="@color/textPrimary">
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/passwordInput"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:inputType="textPassword"
-                android:maxLength="20"
-                android:textColor="@color/textPrimary"
-                android:textCursorDrawable="@color/textSecondary" />
-
-        </com.google.android.material.textfield.TextInputLayout>
-
-        <!-- 생성 버튼 -->
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/createButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="32dp"
-            android:paddingVertical="12dp"
-            android:backgroundTint="@color/accent"
-            android:text="그룹 만들기"
-            android:textSize="16sp"
-            app:cornerRadius="8dp" />
+        </LinearLayout>
 
     </LinearLayout>
 

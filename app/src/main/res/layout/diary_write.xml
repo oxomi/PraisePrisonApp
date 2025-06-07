@@ -8,32 +8,20 @@
     <!-- Toolbar -->
     <com.google.android.material.appbar.MaterialToolbar
         android:id="@+id/toolbar"
-        android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
-        android:background="@color/background"
-        android:elevation="0dp"
+        style="@style/CustomToolbarStyle"
         app:layout_constraintTop_toTopOf="parent"
-        app:navigationIcon="@drawable/ic_back"
-        app:menu="@menu/menu_diary_write">
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="칭찬 일기 작성"
-            android:textColor="@color/textPrimary"
-            android:textSize="20sp"
-            android:textStyle="bold" />
-
-    </com.google.android.material.appbar.MaterialToolbar>
+        app:title="칭찬 일기 작성"
+        app:navigationIcon="@drawable/ic_back" />
 
     <!-- Content -->
     <ScrollView
+        android:id="@+id/scrollView"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:clipToPadding="false"
         android:paddingHorizontal="24dp"
         android:paddingBottom="16dp"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/sendButton"
         app:layout_constraintTop_toBottomOf="@id/toolbar">
 
         <LinearLayout
@@ -213,15 +201,25 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
-                        android:text="사진 첨부하기"
+                        android:text="사진 선택"
                         android:textColor="@color/textSecondary" />
 
                 </LinearLayout>
-
             </androidx.cardview.widget.CardView>
-
         </LinearLayout>
-
     </ScrollView>
+
+    <!-- Send Button -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/sendButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:paddingVertical="12dp"
+        android:backgroundTint="@color/accent"
+        android:text="보내기"
+        android:textSize="16sp"
+        app:cornerRadius="8dp"
+        app:layout_constraintBottom_toBottomOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout> 

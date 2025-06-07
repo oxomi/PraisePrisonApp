@@ -78,6 +78,7 @@ class DiaryWriteFragment : Fragment() {
         setupMoodSelection()
         setupImageButtons()
         setupContentField()
+        setupSendButton()
     }
 
     private fun setupToolbar() {
@@ -111,29 +112,6 @@ class DiaryWriteFragment : Fragment() {
         // 뒤로가기
         binding.toolbar.setNavigationOnClickListener {
             parentFragmentManager.popBackStack()
-        }
-
-        // 저장 버튼 스타일 설정
-        binding.toolbar.menu.findItem(R.id.action_save)?.let { menuItem ->
-            val actionView = LayoutInflater.from(requireContext()).inflate(R.layout.menu_item_save, null)
-            val saveText = actionView.findViewById<TextView>(R.id.saveText)
-            saveText.setTextColor(ContextCompat.getColor(requireContext(), R.color.textPrimary))
-            saveText.setPadding(0, 0, resources.getDimensionPixelSize(R.dimen.spacing_medium), 0)
-            menuItem.actionView = actionView
-            actionView.setOnClickListener {
-                saveDiary()
-            }
-        }
-
-        // 저장 버튼
-        binding.toolbar.setOnMenuItemClickListener { menuItem ->
-            when (menuItem.itemId) {
-                R.id.action_save -> {
-                    saveDiary()
-                    true
-                }
-                else -> false
-            }
         }
     }
 
@@ -193,17 +171,27 @@ class DiaryWriteFragment : Fragment() {
         }
     }
 
+    private fun setupSendButton() {
+        binding.sendButton.setOnClickListener {
+            saveDiary()
+        }
+    }
+
     private fun saveDiary() {
         val content = binding.etContent.text.toString().trim()
         if (content.isEmpty()) {
             Toast.makeText(context, "내용을 입력해주세요", Toast.LENGTH_SHORT).show()
+            binding.etContent.error = "내용을 입력해주세요"
             return
         }
-        
+
         if (selectedMood == null) {
             Toast.makeText(context, "오늘의 감정을 선택해주세요", Toast.LENGTH_SHORT).show()
             return
         }
+
+        // 버튼 비활성화
+        binding.sendButton.isEnabled = false
 
         // 이미지가 있으면 먼저 업로드
         if (selectedImageUri != null) {
