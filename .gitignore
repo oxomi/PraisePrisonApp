@@ -52,6 +52,7 @@ vcs.xml
 app/google-services.json
 app/praiseprisonapp-firebase-adminsdk-fbsvc-4432d541d7.json
 app/praiseprisonapp-firebase-adminsdk-fbsvc-*.json
+app/praiseprisonapp-firebase-adminsdk-fbsvc-a457701c5e.json
 
 # Android Profiling
 *.hprof
