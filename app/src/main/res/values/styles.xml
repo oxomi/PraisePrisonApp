@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="CalendarViewTheme" parent="ThemeOverlay.MaterialComponents.MaterialCalendar">
+    <style name="CalendarViewTheme" parent="ThemeOverlay.Material3.MaterialCalendar">
         <item name="colorAccent">@color/accent</item>
         <item name="android:textColorPrimary">@color/textPrimary</item>
         <item name="android:textColorSecondary">@color/textSecondary</item>
@@ -15,5 +15,20 @@
     <style name="CalendarWeekText">
         <item name="android:textSize">12sp</item>
         <item name="android:textColor">@color/textSecondary</item>
+    </style>
+
+    <!-- Material3 Custom Styles -->
+    <style name="Widget.App.TextInputLayout" parent="Widget.Material3.TextInputLayout.OutlinedBox">
+        <item name="boxStrokeColor">@color/accent</item>
+        <item name="hintTextColor">@color/accent</item>
+        <item name="boxStrokeWidth">2dp</item>
+        <item name="boxStrokeWidthFocused">2dp</item>
+    </style>
+
+    <style name="Widget.App.Chip" parent="Widget.Material3.Chip.Filter">
+        <item name="chipBackgroundColor">@color/accent</item>
+        <item name="android:textColor">@color/background</item>
+        <item name="chipStrokeWidth">0dp</item>
+        <item name="chipCornerRadius">16dp</item>
     </style>
 </resources> 

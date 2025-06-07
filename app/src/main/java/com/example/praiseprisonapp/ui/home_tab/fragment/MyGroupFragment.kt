@@ -1,6 +1,7 @@
 package com.example.praiseprisonapp.ui.home_tab.fragment
 
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.EdgeEffect
 import android.widget.TextView
@@ -16,6 +17,7 @@ import com.example.praiseprisonapp.ui.home_tab.adapter.GroupAdapter
 import kotlinx.coroutines.launch
 
 class MyGroupFragment : Fragment(R.layout.home_my_group) {
+    private val TAG = "MyGroupFragment"
 
     private lateinit var recyclerView: RecyclerView
     private lateinit var emptyView: TextView
@@ -25,6 +27,7 @@ class MyGroupFragment : Fragment(R.layout.home_my_group) {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        Log.d(TAG, "onViewCreated")
 
         recyclerView = view.findViewById(R.id.rvMyGroups)
         emptyView = view.findViewById(R.id.emptyView)
@@ -34,48 +37,59 @@ class MyGroupFragment : Fragment(R.layout.home_my_group) {
     }
 
     private fun setupRecyclerView() {
-        recyclerView.layoutManager = LinearLayoutManager(requireContext())
+        Log.d(TAG, "Setting up RecyclerView")
         
-        // 오버스크롤 효과 제거
-        recyclerView.edgeEffectFactory = object : RecyclerView.EdgeEffectFactory() {
-            override fun createEdgeEffect(view: RecyclerView, direction: Int): EdgeEffect {
-                return EdgeEffect(view.context).apply {
-                    color = requireContext().getColor(R.color.background)
+        recyclerView.apply {
+            layoutManager = LinearLayoutManager(requireContext())
+            setHasFixedSize(true)
+            
+            // 오버스크롤 효과 제거
+            edgeEffectFactory = object : RecyclerView.EdgeEffectFactory() {
+                override fun createEdgeEffect(view: RecyclerView, direction: Int): EdgeEffect {
+                    return EdgeEffect(view.context).apply {
+                        color = requireContext().getColor(R.color.background)
+                    }
                 }
             }
         }
 
         groupAdapter = GroupAdapter(groupList)
         recyclerView.adapter = groupAdapter
+        
+        Log.d(TAG, "RecyclerView setup completed")
     }
 
-    private fun loadMyGroups() {
+    fun loadMyGroups() {
+        Log.d(TAG, "Loading my groups")
+        
         lifecycleScope.launch {
             try {
                 val result = groupRepository.getMyGroups()
                 result.onSuccess { groups ->
+                    Log.d(TAG, "Successfully loaded ${groups.size} groups")
+                    
                     groupList.clear()
                     groupList.addAll(groups)
+                    
+                    Log.d(TAG, "Group list updated, size: ${groupList.size}")
                     groupAdapter.notifyDataSetChanged()
                     
                     // 그룹 유무에 따라 빈 화면 표시
                     updateEmptyView(groups.isEmpty())
                 }.onFailure { exception ->
-                    if (exception is IllegalStateException && exception.message == "User not logged in") {
-                        // 로그인되지 않은 상태는 조용히 처리
-                        updateEmptyView(true)
-                    } else {
-                        // 실제 오류 발생 시에만 토스트 메시지 표시
-                        Toast.makeText(requireContext(), "그룹 목록을 불러오는데 실패했습니다.", Toast.LENGTH_SHORT).show()
-                    }
+                    Log.e(TAG, "Failed to load groups", exception)
+                    updateEmptyView(true)
                 }
             } catch (e: Exception) {
-                Toast.makeText(requireContext(), "오류가 발생했습니다: ${e.message}", Toast.LENGTH_SHORT).show()
+                Log.e(TAG, "Error loading groups", e)
+                updateEmptyView(true)
             }
         }
     }
 
     private fun updateEmptyView(isEmpty: Boolean) {
+        Log.d(TAG, "Updating empty view, isEmpty: $isEmpty")
+        
         if (isEmpty) {
             recyclerView.visibility = View.GONE
             emptyView.visibility = View.VISIBLE
@@ -87,16 +101,16 @@ class MyGroupFragment : Fragment(R.layout.home_my_group) {
 
     override fun onResume() {
         super.onResume()
+        Log.d(TAG, "onResume")
         // 화면이 다시 보일 때마다 그룹 목록 새로고침
         loadMyGroups()
     }
 
     // 새 그룹 추가 메서드
     fun addNewGroup(group: GroupData) {
-        groupList.add(group)
-        groupAdapter.notifyItemInserted(groupList.size - 1)
-        // 그룹이 추가되면 빈 화면 숨기기
-        emptyView.visibility = View.GONE
-        recyclerView.visibility = View.VISIBLE
+        Log.d(TAG, "Adding new group: ${group.name}")
+        groupList.add(0, group) // 새 그룹을 목록 맨 앞에 추가
+        groupAdapter.notifyItemInserted(0)
+        updateEmptyView(false)
     }
 }

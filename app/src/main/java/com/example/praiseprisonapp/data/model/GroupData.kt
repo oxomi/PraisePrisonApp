@@ -1,7 +1,11 @@
 package com.example.praiseprisonapp.data.model
 
+import android.os.Parcelable
 import com.google.firebase.Timestamp
+import com.google.firebase.auth.FirebaseAuth
+import kotlinx.parcelize.Parcelize
 
+@Parcelize
 data class GroupData(
     val id: String = "",  // Firestore document ID
     val name: String = "",
@@ -12,10 +16,15 @@ data class GroupData(
     val createdAt: Timestamp = Timestamp.now(),
     val createdBy: String = "",  // 생성자 userId
     val members: List<String> = listOf(),  // 멤버 userId 목록
-) {
+) : Parcelable {
     val memberCount: Int
         get() = members.size
 
     val isMyGroup: Boolean
-        get() = true  // TODO: 현재 로그인한 사용자의 ID와 비교하도록 수정 필요
+        get() {
+            val currentUser = FirebaseAuth.getInstance().currentUser
+            return currentUser?.let { user ->
+                members.contains(user.uid)
+            } ?: false
+        }
 }

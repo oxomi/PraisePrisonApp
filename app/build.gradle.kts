@@ -3,13 +3,14 @@ plugins {
     alias(libs.plugins.jetbrains.kotlin.android)
 
     id ("kotlin-kapt")
+    id ("kotlin-parcelize")
     alias(libs.plugins.google.gms.google.services)
 
 }
 
 android {
     namespace = "com.example.praiseprisonapp"
-    compileSdk = 35
+    compileSdk = 34
 
     defaultConfig {
         applicationId = "com.example.praiseprisonapp"
@@ -65,14 +66,12 @@ dependencies {
     implementation(platform("com.google.firebase:firebase-bom:32.7.2"))
     implementation("com.google.firebase:firebase-auth")
     implementation("com.google.firebase:firebase-firestore")
+    implementation("com.google.firebase:firebase-storage-ktx")
 
     // ViewModel
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
     
-    // Material Design
-    implementation("com.google.android.material:material:1.11.0")
-
     // ViewBinding
     implementation("androidx.databinding:databinding-runtime:8.2.2")
 }

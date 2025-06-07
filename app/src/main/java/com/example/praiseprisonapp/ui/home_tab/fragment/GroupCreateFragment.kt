@@ -25,11 +25,15 @@ import java.util.Locale
 import android.widget.Toast
 import androidx.lifecycle.lifecycleScope
 import com.example.praiseprisonapp.data.repository.GroupRepository
+import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
+import java.util.UUID
 
 class GroupCreateFragment : Fragment(R.layout.group_create) {
 
     private var currentPhotoPath: String? = null
+    private var selectedImageUri: Uri? = null
     private lateinit var groupImage: ImageView
     private lateinit var groupNameInput: com.google.android.material.textfield.TextInputEditText
     private lateinit var groupDescriptionInput: com.google.android.material.textfield.TextInputEditText
@@ -57,25 +61,40 @@ class GroupCreateFragment : Fragment(R.layout.group_create) {
         }
     }
 
-    // 카메라로 찍은 사진 결과 처리
-    private val takePictureLauncher = registerForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            currentPhotoPath?.let { path ->
-                groupImage.setImageURI(Uri.fromFile(File(path)))
-            }
-        }
-    }
-
     // 갤러리에서 선택한 이미지 결과 처리
     private val pickImageLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
             result.data?.data?.let { uri ->
+                selectedImageUri = uri
                 groupImage.setImageURI(uri)
             }
+        }
+    }
+
+    // 카메라로 찍은 사진 결과 처리
+    private val takePictureLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            currentPhotoPath?.let { path ->
+                selectedImageUri = Uri.fromFile(File(path))
+                groupImage.setImageURI(selectedImageUri)
+            }
+        }
+    }
+
+    private suspend fun uploadImage(imageUri: Uri): String {
+        return try {
+            val storage = FirebaseStorage.getInstance()
+            val filename = "group_images/${UUID.randomUUID()}"
+            val ref = storage.reference.child(filename)
+            
+            ref.putFile(imageUri).await()
+            ref.downloadUrl.await().toString()
+        } catch (e: Exception) {
+            throw e
         }
     }
 
@@ -131,10 +150,20 @@ class GroupCreateFragment : Fragment(R.layout.group_create) {
             // 코루틴으로 그룹 생성
             lifecycleScope.launch {
                 try {
+                    // 이미지 업로드
+                    val imageUrl = selectedImageUri?.let { uri ->
+                        try {
+                            uploadImage(uri)
+                        } catch (e: Exception) {
+                            Toast.makeText(requireContext(), "이미지 업로드에 실패했습니다: ${e.message}", Toast.LENGTH_SHORT).show()
+                            null
+                        }
+                    } ?: ""
+
                     val result = groupRepository.createGroup(
                         name = groupName,
                         description = groupDescription,
-                        imageUrl = currentPhotoPath ?: "", // TODO: Firebase Storage에 이미지 업로드 필요
+                        imageUrl = imageUrl,
                         visibility = if (isPublic) "전체공개" else "일부공개",
                         password = password
                     )
@@ -142,6 +171,19 @@ class GroupCreateFragment : Fragment(R.layout.group_create) {
                     result.onSuccess { newGroup ->
                         // 그룹 생성 성공
                         Toast.makeText(requireContext(), "그룹이 생성되었습니다.", Toast.LENGTH_SHORT).show()
+                        
+                        // 내 그룹 프래그먼트 찾아서 목록 갱신
+                        parentFragmentManager.fragments.forEach { fragment ->
+                            when (fragment) {
+                                is MyGroupFragment -> {
+                                    fragment.loadMyGroups() // 전체 목록 새로고침
+                                }
+                                is AllGroupFragment -> {
+                                    fragment.loadAllGroups() // 전체 목록 새로고침
+                                }
+                            }
+                        }
+                        
                         parentFragmentManager.popBackStack()
                     }.onFailure { exception ->
                         // 그룹 생성 실패
