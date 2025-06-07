@@ -74,8 +74,10 @@
                 android:layout_height="wrap_content"
                 android:text="독서 모임"
                 android:textColor="@color/textPrimary"
-                android:textSize="16sp"
-                android:textStyle="bold" />
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:ellipsize="end"
+                android:maxLines="1" />
 
             <!-- Group Description -->
             <TextView
@@ -85,7 +87,9 @@
                 android:layout_marginTop="4dp"
                 android:text="책 읽고 감상 나누기"
                 android:textColor="@color/textSecondary"
-                android:textSize="14sp" />
+                android:textSize="14sp"
+                android:ellipsize="end"
+                android:maxLines="2" />
 
             <!-- Member Count -->
             <TextView

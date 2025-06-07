@@ -16,30 +16,16 @@
         <!-- Custom Toolbar -->
         <androidx.appcompat.widget.Toolbar
             android:id="@+id/toolbar"
-            android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize"
-            android:paddingStart="16dp"
-            android:paddingEnd="16dp"
-            android:background="@color/background"
+            style="@style/CustomToolbarStyle"
+            app:title="칭찬감옥"
             app:layout_scrollFlags="noScroll">
 
-            <!-- Title aligned to start -->
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_vertical"
-                android:text="칭찬감옥"
-                android:layout_marginLeft="8dp"
-                android:textColor="@color/textPrimary"
-                android:textSize="22sp"
-                android:textStyle="bold" />
-
-            <!-- Floating style ImageButton aligned to end -->
             <ImageButton
                 android:id="@+id/btnCreateGroup"
                 android:layout_width="48dp"
                 android:layout_height="48dp"
                 android:layout_gravity="end|center_vertical"
+                android:layout_marginRight="5dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:src="@drawable/ic_addbutton"
                 android:scaleType="centerInside"

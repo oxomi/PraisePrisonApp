@@ -68,7 +68,7 @@ class AllGroupFragment : Fragment(R.layout.home_all_group) {
         })
     }
 
-    private fun loadAllGroups() {
+    fun loadAllGroups() {
         lifecycleScope.launch {
             try {
                 val result = groupRepository.getAllGroups()
@@ -78,15 +78,13 @@ class AllGroupFragment : Fragment(R.layout.home_all_group) {
                     filterGroups(searchEditText.text.toString())
                 }.onFailure { exception ->
                     if (exception is IllegalStateException && exception.message == "User not logged in") {
-                        // 로그인되지 않은 상태는 조용히 처리
                         updateEmptyView(true)
                     } else {
-                        // 실제 오류 발생 시에만 토스트 메시지 표시
-                        Toast.makeText(requireContext(), "그룹 목록을 불러오는데 실패했습니다.", Toast.LENGTH_SHORT).show()
+                        updateEmptyView(true)
                     }
                 }
             } catch (e: Exception) {
-                Toast.makeText(requireContext(), "오류가 발생했습니다: ${e.message}", Toast.LENGTH_SHORT).show()
+                updateEmptyView(true)
             }
         }
     }

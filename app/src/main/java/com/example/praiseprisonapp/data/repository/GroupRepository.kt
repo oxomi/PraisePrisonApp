@@ -1,14 +1,18 @@
 package com.example.praiseprisonapp.data.repository
 
+import android.util.Log
 import com.example.praiseprisonapp.data.model.GroupData
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import kotlinx.coroutines.tasks.await
+import com.google.firebase.firestore.DocumentSnapshot
+import com.google.firebase.Timestamp
 
 class GroupRepository {
     private val db = FirebaseFirestore.getInstance()
     private val auth = FirebaseAuth.getInstance()
+    private val TAG = "GroupRepository"
 
     private val groupsCollection = db.collection("groups")
     private val usersCollection = db.collection("users")
@@ -74,28 +78,27 @@ class GroupRepository {
             val currentUser = auth.currentUser
                 ?: return Result.failure(IllegalStateException("User not logged in"))
 
+            Log.d(TAG, "Fetching groups for user: ${currentUser.uid}")
+
             val snapshot = groupsCollection
                 .whereArrayContains("members", currentUser.uid)
                 .orderBy("createdAt", Query.Direction.DESCENDING)
                 .get()
                 .await()
 
+            Log.d(TAG, "Found ${snapshot.documents.size} groups")
+
             val groups = snapshot.documents.map { doc ->
-                GroupData(
-                    id = doc.id,
-                    name = doc.getString("name") ?: "",
-                    description = doc.getString("description") ?: "",
-                    imageUrl = doc.getString("imageUrl") ?: "",
-                    visibility = doc.getString("visibility") ?: "",
-                    password = doc.getString("password"),
-                    createdAt = doc.getTimestamp("createdAt") ?: com.google.firebase.Timestamp.now(),
-                    createdBy = doc.getString("createdBy") ?: "",
-                    members = (doc.get("members") as? List<String>) ?: listOf()
-                )
+                Log.d(TAG, "Processing group: ${doc.id}")
+                Log.d(TAG, "Group data: name=${doc.getString("name")}, members=${doc.get("members")}")
+                
+                documentToGroup(doc)
             }
 
+            Log.d(TAG, "Processed ${groups.size} groups")
             Result.success(groups)
         } catch (e: Exception) {
+            Log.e(TAG, "Error fetching groups", e)
             Result.failure(e)
         }
     }
@@ -105,28 +108,48 @@ class GroupRepository {
             val currentUser = auth.currentUser
                 ?: return Result.failure(IllegalStateException("User not logged in"))
 
+            // 먼저 내 그룹 ID 목록을 가져옵니다
+            val myGroupsSnapshot = groupsCollection
+                .whereArrayContains("members", currentUser.uid)
+                .get()
+                .await()
+            
+            val myGroupIds = myGroupsSnapshot.documents.map { it.id }.toSet()
+
+            // 전체 그룹을 가져온 후 내 그룹을 필터링합니다
             val snapshot = groupsCollection
                 .orderBy("createdAt", Query.Direction.DESCENDING)
                 .get()
                 .await()
 
-            val groups = snapshot.documents.map { doc ->
-                GroupData(
-                    id = doc.id,
-                    name = doc.getString("name") ?: "",
-                    description = doc.getString("description") ?: "",
-                    imageUrl = doc.getString("imageUrl") ?: "",
-                    visibility = doc.getString("visibility") ?: "",
-                    password = doc.getString("password"),
-                    createdAt = doc.getTimestamp("createdAt") ?: com.google.firebase.Timestamp.now(),
-                    createdBy = doc.getString("createdBy") ?: "",
-                    members = (doc.get("members") as? List<String>) ?: listOf()
-                )
-            }
+            val groups = snapshot.documents
+                .filter { !myGroupIds.contains(it.id) } // 내 그룹 제외
+                .map { doc ->
+                    documentToGroup(doc)
+                }
 
             Result.success(groups)
         } catch (e: Exception) {
             Result.failure(e)
         }
+    }
+
+    private fun documentToGroup(document: DocumentSnapshot): GroupData {
+        val data = document.data ?: throw IllegalStateException("Document data is null")
+        
+        @Suppress("UNCHECKED_CAST")
+        val members = (data["members"] as? List<*>)?.filterIsInstance<String>() ?: emptyList()
+        
+        return GroupData(
+            id = document.id,
+            name = data["name"] as? String ?: "",
+            description = data["description"] as? String ?: "",
+            imageUrl = data["imageUrl"] as? String ?: "",
+            visibility = data["visibility"] as? String ?: "공개",
+            password = data["password"] as? String,
+            createdAt = data["createdAt"] as? Timestamp ?: Timestamp.now(),
+            createdBy = data["createdBy"] as? String ?: "",
+            members = members
+        )
     }
 }
