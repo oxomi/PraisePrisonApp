@@ -15,6 +15,7 @@ import com.example.praiseprisonapp.databinding.ProfileBinding
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import java.util.*
+import com.example.praiseprisonapp.LoginActivity
 
 class ProfileFragment : Fragment() {
     private var _binding: ProfileBinding? = null
