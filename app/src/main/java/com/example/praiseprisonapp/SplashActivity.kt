@@ -3,13 +3,12 @@ package com.example.praiseprisonapp
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import com.google.firebase.auth.FirebaseAuth
-import android.widget.Toast
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
-// 인트로 화면
 @SuppressLint("CustomSplashScreen")
 class SplashActivity : AppCompatActivity() {
     private lateinit var auth: FirebaseAuth
@@ -20,20 +19,18 @@ class SplashActivity : AppCompatActivity() {
 
         auth = FirebaseAuth.getInstance()
 
+        // 코루틴 사용해서 2초 대기 후 로그인 상태 확인
+        lifecycleScope.launch {
+            delay(2000)
 
-
-
-        // 2초 후에 로그인 상태 확인 후 적절한 화면으로 이동
-        Handler(Looper.getMainLooper()).postDelayed({
-            // 현재 로그인된 사용자가 있는지 확인
-            if (auth.currentUser != null) {
-                // 로그인된 사용자가 있으면 메인 화면으로
-                startActivity(Intent(this, MainActivity::class.java))
+            val nextActivity = if (auth.currentUser != null) {
+                MainActivity::class.java
             } else {
-                // 로그인된 사용자가 없으면 로그인 화면으로
-                startActivity(Intent(this, LoginActivity::class.java))
+                LoginActivity::class.java
             }
+
+            startActivity(Intent(this@SplashActivity, nextActivity))
             finish()
-        }, 2000)
+        }
     }
-} 
+}

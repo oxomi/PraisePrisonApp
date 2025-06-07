@@ -8,14 +8,20 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.CalendarView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import com.example.praiseprisonapp.databinding.ProfileBinding
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import java.util.*
-import com.example.praiseprisonapp.LoginActivity
+import com.kizitonwose.calendar.core.*
+import com.kizitonwose.calendar.view.*
+import java.time.YearMonth
+import java.time.temporal.WeekFields
+import java.util.Locale
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import com.google.firebase.Timestamp
 
 class ProfileFragment : Fragment() {
     private var _binding: ProfileBinding? = null
@@ -23,6 +29,8 @@ class ProfileFragment : Fragment() {
     private lateinit var auth: FirebaseAuth
     private lateinit var db: FirebaseFirestore
     private lateinit var prefs: SharedPreferences
+    private val writtenDates = HashSet<LocalDate>()
+    private val monthTitleFormatter = DateTimeFormatter.ofPattern("yyyy년 M월")
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -84,32 +92,86 @@ class ProfileFragment : Fragment() {
     private fun setupCalendar() {
         val user = auth.currentUser ?: return
         
-        // 일기 작성 날짜 데이터 가져오기
-        db.collection("diaries")
-            .whereEqualTo("userId", user.uid)
-            .get()
-            .addOnSuccessListener { documents ->
-                val writtenDates = documents.map { doc ->
-                    doc.getTimestamp("createdAt")?.toDate()
-                }.filterNotNull()
+        // 캘린더 초기 설정
+        val currentMonth = YearMonth.now()
+        val startMonth = currentMonth.minusMonths(12)  // 12개월 전부터
+        val endMonth = currentMonth.plusMonths(12)    // 12개월 후까지
+        val firstDayOfWeek = WeekFields.of(Locale.getDefault()).firstDayOfWeek
 
-                // 캘린더 날짜 선택 리스너
-                binding.attendanceCalendar.setOnDateChangeListener { _, year, month, dayOfMonth ->
-                    val selectedDate = Calendar.getInstance().apply {
-                        set(year, month, dayOfMonth)
-                    }.time
+        binding.attendanceCalendar.apply {
+            dayViewResource = R.layout.calendar_day
+            monthHeaderResource = R.layout.calendar_month
+
+            monthHeaderBinder = object : MonthHeaderFooterBinder<MonthViewContainer> {
+                override fun create(view: View) = MonthViewContainer(view)
+                override fun bind(container: MonthViewContainer, data: CalendarMonth) {
+                    // 월 헤더는 calendar_month.xml에서 이미 처리됨
+                }
+            }
+
+            dayBinder = object : MonthDayBinder<DayViewContainer> {
+                override fun create(view: View) = DayViewContainer(view)
+                override fun bind(container: DayViewContainer, data: CalendarDay) {
+                    val date = data.date
+                    container.textView.text = date.dayOfMonth.toString()
                     
-                    // 선택한 날짜에 일기가 있는지 확인
-                    val hasEntry = writtenDates.any { date ->
-                        isSameDay(date, selectedDate)
+                    // 일기 작성 날짜 표시
+                    if (writtenDates.contains(date)) {
+                        container.textView.setTextColor(Color.RED)
+                    } else {
+                        container.textView.setTextColor(Color.BLACK)
                     }
                     
-                    if (hasEntry) {
-                        Toast.makeText(requireContext(), "이 날짜에 작성한 일기가 있습니다.", Toast.LENGTH_SHORT).show()
+                    container.view.setOnClickListener {
+                        if (writtenDates.contains(date)) {
+                            Toast.makeText(requireContext(), "이 날짜에 작성한 일기가 있습니다.", Toast.LENGTH_SHORT).show()
+                        }
                     }
                 }
             }
+
+            monthScrollListener = { month ->
+                binding.monthYearText.text = monthTitleFormatter.format(month.yearMonth)
+            }
+
+            setup(startMonth, endMonth, firstDayOfWeek)
+            scrollToMonth(currentMonth)
+        }
+
+        // 일기 작성 날짜 데이터 가져오기
+        db.collection("diaries")
+            .whereEqualTo("authorId", user.uid)
+            .get()
+            .addOnSuccessListener { documents ->
+                writtenDates.clear()
+                for (document in documents) {
+                    val timestamp = document.getTimestamp("createdAt")
+                    if (timestamp != null) {
+                        val date = timestamp.toDate()
+                        val calendar = Calendar.getInstance().apply { time = date }
+                        val localDate = LocalDate.of(
+                            calendar.get(Calendar.YEAR),
+                            calendar.get(Calendar.MONTH) + 1,
+                            calendar.get(Calendar.DAY_OF_MONTH)
+                        )
+                        writtenDates.add(localDate)
+                    }
+                }
+                binding.attendanceCalendar.notifyCalendarChanged()
+                
+                // 출석 일수 표시
+                binding.monthYearText.text = "${writtenDates.size}일 작성"
+            }
+            .addOnFailureListener {
+                Toast.makeText(requireContext(), "일기 데이터를 불러오는데 실패했습니다.", Toast.LENGTH_SHORT).show()
+            }
     }
+
+    class DayViewContainer(view: View) : ViewContainer(view) {
+        val textView = view.findViewById<android.widget.TextView>(R.id.calendarDayText)
+    }
+
+    class MonthViewContainer(view: View) : ViewContainer(view)
 
     private fun setupNotificationSettings() {
         // 저장된 알림 설정 불러오기
@@ -129,7 +191,6 @@ class ProfileFragment : Fragment() {
     }
 
     private fun updateNotificationSettings() {
-        // TODO: FCM 토큰 업데이트 및 서버에 알림 설정 전송
         val user = auth.currentUser ?: return
         val reminderEnabled = binding.reminderSwitch.isChecked
         val interactionEnabled = binding.interactionSwitch.isChecked
@@ -145,14 +206,6 @@ class ProfileFragment : Fragment() {
             .addOnFailureListener {
                 Toast.makeText(requireContext(), "알림 설정 업데이트 실패", Toast.LENGTH_SHORT).show()
             }
-    }
-
-    private fun isSameDay(date1: Date, date2: Date): Boolean {
-        val cal1 = Calendar.getInstance().apply { time = date1 }
-        val cal2 = Calendar.getInstance().apply { time = date2 }
-        return cal1.get(Calendar.YEAR) == cal2.get(Calendar.YEAR) &&
-                cal1.get(Calendar.MONTH) == cal2.get(Calendar.MONTH) &&
-                cal1.get(Calendar.DAY_OF_MONTH) == cal2.get(Calendar.DAY_OF_MONTH)
     }
 
     override fun onDestroyView() {

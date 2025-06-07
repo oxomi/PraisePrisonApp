@@ -21,7 +21,8 @@ class GroupDetailFragment : Fragment(R.layout.group_detail) {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         arguments?.let {
-            groupData = it.getParcelable("group_data", GroupData::class.java)
+            @Suppress("DEPRECATION")
+            groupData = it.getParcelable("group_data") as? GroupData
                 ?: throw IllegalArgumentException("Group data is required")
         }
     }
@@ -71,7 +72,12 @@ class GroupDetailFragment : Fragment(R.layout.group_detail) {
                 snapshot?.let { documents ->
                     diaryList.clear()
                     for (document in documents) {
-                        val diary = document.toObject(DiaryData::class.java).copy(id = document.id)
+                        val rawDiary = document.toObject(DiaryData::class.java)
+                        val authorName = document.getString("authorName") ?: "알 수 없음"
+                        val diary = rawDiary.copy(
+                            id = document.id,
+                            authorName = authorName
+                        )
                         diaryList.add(diary)
                     }
                     adapter.notifyDataSetChanged()
