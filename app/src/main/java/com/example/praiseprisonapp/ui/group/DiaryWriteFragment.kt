@@ -34,11 +34,11 @@ import java.util.Locale
 class DiaryWriteFragment : Fragment() {
     private var _binding: DiaryWriteBinding? = null
     private val binding get() = _binding!!
-    
+
     private val db = FirebaseFirestore.getInstance()
     private val auth = FirebaseAuth.getInstance()
     private val storage = FirebaseStorage.getInstance()
-    
+
     private var selectedImageUri: Uri? = null
     private var tempPhotoUri: Uri? = null
     private var selectedMood: String? = null
@@ -117,19 +117,16 @@ class DiaryWriteFragment : Fragment() {
                 .get()
                 .addOnSuccessListener { document ->
                     if (document != null && document.exists()) {
-                        val nickname = document.getString("nickname") ?: user.displayName
-                        binding.tvUserName.text = nickname
+                        binding.tvUserName.text = "나"
                     } else {
-                        // Firestore에 데이터가 없으면 Firebase Auth의 displayName 사용
-                        binding.tvUserName.text = user.displayName
+                        binding.tvUserName.text = "나"
                     }
                 }
                 .addOnFailureListener {
-                    // 실패시 Firebase Auth의 displayName 사용
-                    binding.tvUserName.text = user.displayName
+                    binding.tvUserName.text = "나"
                 }
         }
-        
+
         binding.tvTitle.text = today
 
         // 뒤로가기
@@ -207,7 +204,7 @@ class DiaryWriteFragment : Fragment() {
             "${requireContext().packageName}.fileprovider",
             photoFile
         )
-        
+
         val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE).apply {
             putExtra(MediaStore.EXTRA_OUTPUT, tempPhotoUri)
         }
@@ -264,7 +261,7 @@ class DiaryWriteFragment : Fragment() {
 
     private fun uploadImageAndSaveDiary(content: String) {
         val imageRef = storage.reference.child("diary_images/${System.currentTimeMillis()}.jpg")
-        
+
         selectedImageUri?.let { uri ->
             imageRef.putFile(uri)
                 .addOnSuccessListener {
@@ -280,7 +277,7 @@ class DiaryWriteFragment : Fragment() {
 
     private fun saveDiaryToFirestore(content: String, imageUrl: String) {
         val currentUser = auth.currentUser ?: return
-        
+
         val diary = hashMapOf(
             "groupId" to groupId,
             "authorId" to currentUser.uid,
@@ -316,4 +313,4 @@ class DiaryWriteFragment : Fragment() {
             }
         }
     }
-} 
+}

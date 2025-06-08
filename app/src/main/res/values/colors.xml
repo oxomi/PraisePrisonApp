@@ -19,4 +19,9 @@
 
     <!-- Error -->
     <color name="error">#E57373</color>
+
+    <!-- Diary backgrounds -->
+    <color name="my_diary_background">#E3F2FD</color>
+    <color name="other_diary_background">#FFFCF4</color>
+    <color name="stroke_color">#E0E0E0</color>
 </resources>
