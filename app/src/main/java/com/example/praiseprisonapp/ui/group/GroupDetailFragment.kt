@@ -2,6 +2,7 @@ package com.example.praiseprisonapp.ui.group
 
 import android.os.Bundle
 import android.view.View
+import android.widget.ImageButton
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.praiseprisonapp.R
@@ -36,6 +37,19 @@ class GroupDetailFragment : Fragment(R.layout.group_detail) {
             setNavigationOnClickListener {
                 parentFragmentManager.popBackStack()
             }
+        }
+
+        // 수정 버튼 클릭 리스너
+        view.findViewById<ImageButton>(R.id.btnEdit).setOnClickListener {
+            val editFragment = GroupEditFragment().apply {
+                arguments = Bundle().apply {
+                    putString("groupId", groupData.id)
+                }
+            }
+            parentFragmentManager.beginTransaction()
+                .replace(R.id.fragment_container, editFragment)
+                .addToBackStack(null)
+                .commit()
         }
 
         // RecyclerView 설정

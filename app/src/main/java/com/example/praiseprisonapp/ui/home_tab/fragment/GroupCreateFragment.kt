@@ -18,6 +18,7 @@ import androidx.fragment.app.Fragment
 import com.example.praiseprisonapp.R
 import com.example.praiseprisonapp.data.model.GroupData
 import com.google.android.material.textfield.TextInputLayout
+import java.io.ByteArrayOutputStream
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -29,6 +30,8 @@ import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import java.util.UUID
+import android.graphics.Bitmap
+import android.util.Log
 
 class GroupCreateFragment : Fragment(R.layout.group_create) {
 
@@ -88,12 +91,24 @@ class GroupCreateFragment : Fragment(R.layout.group_create) {
     private suspend fun uploadImage(imageUri: Uri): String {
         return try {
             val storage = FirebaseStorage.getInstance()
-            val filename = "group_images/${UUID.randomUUID()}"
-            val ref = storage.reference.child(filename)
+            val storageRef = storage.reference
+            val filename = "group_images/${UUID.randomUUID()}.jpg"
+            val imageRef = storageRef.child(filename)
             
-            ref.putFile(imageUri).await()
-            ref.downloadUrl.await().toString()
+            // Convert Uri to byte array
+            val bitmap = MediaStore.Images.Media.getBitmap(requireContext().contentResolver, imageUri)
+            val baos = ByteArrayOutputStream()
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 80, baos)
+            val imageData = baos.toByteArray()
+            
+            // Upload byte array
+            val uploadTask = imageRef.putBytes(imageData)
+            val taskSnapshot = uploadTask.await()
+            
+            // Get download URL
+            imageRef.downloadUrl.await().toString()
         } catch (e: Exception) {
+            Log.e("Storage", "Error uploading image: ${e.message}", e)
             throw e
         }
     }
