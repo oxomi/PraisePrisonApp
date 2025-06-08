@@ -5,72 +5,98 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    app:cardBackgroundColor="#FFFAEE"
     android:layout_margin="8dp"
     app:cardElevation="2dp">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="16dp">
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="12dp">
 
-        <com.google.android.material.textview.MaterialTextView
+        <TextView
+            android:id="@+id/test1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/textPrimary"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:includeFontPadding="false"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
             android:id="@+id/dateText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            tools:text="2024년 5월 21일" />
-
-        <com.google.android.material.chip.Chip
-            android:id="@+id/groupChip"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
-            app:layout_constraintStart_toEndOf="@id/dateText"
-            app:layout_constraintTop_toTopOf="@id/dateText"
-            app:layout_constraintBottom_toBottomOf="@id/dateText"
-            tools:text="오늘의 칭찬" />
+            android:textColor="@color/textPrimary"
+            android:textSize="16sp"
+            android:includeFontPadding="false"
+            app:layout_constraintStart_toEndOf="@id/test1"
+            app:layout_constraintBaseline_toBaselineOf="@id/test1" />
 
         <com.google.android.material.chip.Chip
             android:id="@+id/moodChip"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            app:layout_constraintStart_toEndOf="@id/groupChip"
-            app:layout_constraintTop_toTopOf="@id/dateText"
-            app:layout_constraintBottom_toBottomOf="@id/dateText"
+            android:layout_marginTop="12dp"
+            android:minHeight="32dp"
+            android:textAlignment="center"
+            android:clickable="false"
+            android:checkable="false"
+            style="@style/Widget.App.Chip"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/test1"
             tools:text="기쁨" />
 
         <com.google.android.material.textview.MaterialTextView
             android:id="@+id/contentText"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="12dp"
             android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
+            android:textSize="20sp"
             android:maxLines="3"
             android:ellipsize="end"
-            app:layout_constraintTop_toBottomOf="@id/dateText"
-            tools:text="일기 내용이 여기에 표시됩니다..." />
+            android:padding="2dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/moodChip"
+            tools:text="good~" />
 
         <com.google.android.material.imageview.ShapeableImageView
             android:id="@+id/diaryImage"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="200dp"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="12dp"
             android:scaleType="centerCrop"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toBottomOf="@id/contentText"
             app:shapeAppearance="@style/ShapeAppearance.Material3.MediumComponent" />
+
+        <!-- 구분선 -->
+        <View
+            android:id="@+id/divider"
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_marginTop="20dp"
+            android:background="@color/textSecondary"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/diaryImage" />
 
         <HorizontalScrollView
             android:id="@+id/reactionsScrollView"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="12dp"
             android:scrollbars="none"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/diaryImage">
+            app:layout_constraintTop_toBottomOf="@id/divider">
 
             <LinearLayout
                 android:layout_width="wrap_content"
@@ -85,12 +111,14 @@
 
                 <ImageButton
                     android:id="@+id/btnAddReaction"
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:layout_marginTop="4dp"
                     android:layout_gravity="center_vertical"
                     android:background="?attr/selectableItemBackgroundBorderless"
                     android:contentDescription="리액션 추가"
-                    android:src="@drawable/ic_add" />
+                    android:scaleType="centerInside"
+                    android:src="@drawable/ic_plus_reaction" />
 
             </LinearLayout>
         </HorizontalScrollView>
@@ -99,48 +127,11 @@
             android:id="@+id/tvCommentsCount"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="12dp"
             android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/reactionsScrollView"
-            tools:text="댓글 2개" />
-
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/rvComments"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/tvCommentsCount" />
-
-        <EditText
-            android:id="@+id/etComment"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:layout_marginEnd="8dp"
-            android:background="@null"
-            android:hint="댓글을 입력하세요..."
-            android:importantForAutofill="no"
-            android:inputType="textMultiLine"
-            android:maxLines="3"
-            android:minHeight="48dp"
-            android:padding="8dp"
-            app:layout_constraintEnd_toStartOf="@id/btnSendComment"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/rvComments" />
-
-        <ImageButton
-            android:id="@+id/btnSendComment"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="댓글 작성"
-            android:src="@drawable/ic_send"
-            app:layout_constraintBottom_toBottomOf="@id/etComment"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="@id/etComment" />
+            tools:text="댓글 0개" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

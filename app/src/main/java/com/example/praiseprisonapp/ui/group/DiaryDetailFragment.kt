@@ -57,14 +57,29 @@ class DiaryDetailFragment : Fragment(R.layout.diary_detail) {
         setupCommentInput(view)
 
         // 댓글 데이터 로드
-        loadComments()
+        loadComments(view)
     }
 
     private fun setupDiaryContent(view: View) {
-        // 제목 (작성자 + 날짜)
-        val dateFormat = SimpleDateFormat("yyyy년 MM월 dd일", Locale.getDefault())
-        view.findViewById<TextView>(R.id.tvTitle).text = 
-            "${diaryData.authorName}의 ${dateFormat.format(diaryData.createdAt.toDate())}"
+        // 닉네임과 날짜 설정
+        val dateFormat = SimpleDateFormat("yyyy.MM.dd", Locale.getDefault())
+
+        // 현재 사용자의 닉네임 가져오기
+        val currentUser = auth.currentUser
+        if (currentUser != null) {
+            db.collection("users").document(currentUser.uid)
+                .get()
+                .addOnSuccessListener { document ->
+                    if (document != null && document.exists()) {
+                        val nickname = document.getString("nickname") ?: currentUser.displayName
+                        view.findViewById<TextView>(R.id.tvNickname).text = nickname ?: ""
+                        view.findViewById<TextView>(R.id.tvDate).text = dateFormat.format(diaryData.createdAt.toDate())
+                    }
+                }
+        }
+
+        // 감정 칩 설정
+        view.findViewById<Chip>(R.id.moodChip).text = diaryData.mood
 
         // 내용
         view.findViewById<TextView>(R.id.tvContent).text = diaryData.content
@@ -131,22 +146,43 @@ class DiaryDetailFragment : Fragment(R.layout.diary_detail) {
         }
     }
 
-    private fun loadComments() {
+    private fun loadComments(view: View) {
         db.collection("comments")
             .whereEqualTo("diaryId", diaryData.id)
-            .orderBy("createdAt", Query.Direction.ASCENDING)
+            .orderBy("createdAt")
             .addSnapshotListener { snapshot, e ->
                 if (e != null) {
+                    // 에러 처리
                     return@addSnapshotListener
                 }
 
                 snapshot?.let { documents ->
                     commentList.clear()
                     for (document in documents) {
-                        val comment = document.toObject(CommentData::class.java).copy(id = document.id)
-                        commentList.add(comment)
+                        val comment = document.toObject(CommentData::class.java)
+
+                        // 댓글 작성자의 닉네임을 가져오기
+                        val authorId = document.getString("authorId") ?: ""
+                        if (authorId.isNotEmpty()) {
+                            db.collection("users").document(authorId)
+                                .get()
+                                .addOnSuccessListener { userDocument ->
+                                    val authorName = userDocument.getString("nickname") ?: "알 수 없음"
+                                    commentList.add(comment.copy(
+                                        id = document.id,
+                                        authorName = authorName
+                                    ))
+                                    commentAdapter.notifyDataSetChanged()
+                                }
+                        } else {
+                            commentList.add(comment)
+                        }
                     }
                     commentAdapter.notifyDataSetChanged()
+
+                    // 댓글 개수 업데이트
+                    view.findViewById<TextView>(R.id.tvCommentsLabel)?.text =
+                        "댓글 (${commentList.size})"
                 }
             }
     }
@@ -158,4 +194,4 @@ class DiaryDetailFragment : Fragment(R.layout.diary_detail) {
             }
         }
     }
-} 
+}

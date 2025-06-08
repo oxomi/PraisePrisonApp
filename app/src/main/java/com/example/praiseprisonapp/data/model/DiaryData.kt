@@ -12,6 +12,7 @@ data class DiaryData(
     val authorName: String = "",
     val content: String = "",
     val imageUrl: String = "",
+    val mood: String = "",
     val createdAt: Timestamp = Timestamp.now(),
     val reactions: Map<String, Int> = mapOf(), // 이모지 -> 카운트
     val commentCount: Int = 0
