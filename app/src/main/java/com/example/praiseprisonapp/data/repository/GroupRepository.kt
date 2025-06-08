@@ -105,34 +105,19 @@ class GroupRepository {
 
     suspend fun getAllGroups(): Result<List<GroupData>> {
         return try {
-            val currentUser = auth.currentUser
-                ?: return Result.failure(IllegalStateException("User not logged in"))
-
-            // 먼저 내 그룹 ID 목록을 가져옵니다
-            val myGroupsSnapshot = groupsCollection
-                .whereArrayContains("members", currentUser.uid)
-                .get()
-                .await()
-            
-            val myGroupIds = myGroupsSnapshot.documents.map { it.id }.toSet()
-
-            // 전체 그룹을 가져온 후 내 그룹을 필터링합니다
             val snapshot = groupsCollection
                 .orderBy("createdAt", Query.Direction.DESCENDING)
                 .get()
                 .await()
 
-            val groups = snapshot.documents
-                .filter { !myGroupIds.contains(it.id) } // 내 그룹 제외
-                .map { doc ->
-                    documentToGroup(doc)
-                }
-
+            val groups = snapshot.documents.map { documentToGroup(it) }
             Result.success(groups)
+
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
+
 
     private fun documentToGroup(document: DocumentSnapshot): GroupData {
         val data = document.data ?: throw IllegalStateException("Document data is null")
