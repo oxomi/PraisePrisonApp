@@ -1,6 +1,7 @@
 package com.example.praiseprisonapp.adapter
 
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
@@ -35,12 +36,15 @@ class DiaryListAdapter : ListAdapter<Diary, DiaryListAdapter.DiaryViewHolder>(Di
         fun bind(diary: Diary) {
             binding.apply {
                 dateText.text = dateFormat.format(diary.createdAt.toDate())
-                groupChip.text = diary.groupId
+                groupNameText.text = diary.groupId
                 moodChip.text = diary.mood
                 contentText.text = diary.content
 
-                diary.imageUrl?.let { url ->
-                    diaryImage.load(url) {
+                if (diary.imageUrl.isNullOrEmpty()) {
+                    diaryImage.visibility = View.GONE
+                } else {
+                    diaryImage.visibility = View.VISIBLE
+                    diaryImage.load(diary.imageUrl) {
                         crossfade(true)
                     }
                 }

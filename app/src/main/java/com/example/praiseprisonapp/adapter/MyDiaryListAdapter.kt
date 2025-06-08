@@ -6,6 +6,7 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.example.praiseprisonapp.GroupInfo
 import com.example.praiseprisonapp.R
 import com.example.praiseprisonapp.databinding.MydiaryItemBinding
 import com.example.praiseprisonapp.model.Diary
@@ -13,6 +14,17 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 
 class MyDiaryListAdapter : ListAdapter<Diary, MyDiaryListAdapter.DiaryViewHolder>(DiffCallback()) {
+
+    private var groupList: List<GroupInfo> = emptyList()
+
+    fun setGroups(groups: List<GroupInfo>) {
+        groupList = groups
+        notifyDataSetChanged() // 현재 표시된 아이템들의 그룹 이름을 업데이트
+    }
+
+    private fun getGroupName(groupId: String): String {
+        return groupList.find { it.id == groupId }?.name ?: "(알 수 없는 그룹)"
+    }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): DiaryViewHolder {
         val binding = MydiaryItemBinding.inflate(
@@ -24,7 +36,8 @@ class MyDiaryListAdapter : ListAdapter<Diary, MyDiaryListAdapter.DiaryViewHolder
     }
 
     override fun onBindViewHolder(holder: DiaryViewHolder, position: Int) {
-        holder.bind(getItem(position))
+        val diary = getItem(position)
+        holder.bind(diary, getGroupName(diary.groupId))
     }
 
     class DiaryViewHolder(
@@ -33,10 +46,10 @@ class MyDiaryListAdapter : ListAdapter<Diary, MyDiaryListAdapter.DiaryViewHolder
 
         private val dateFormat = SimpleDateFormat("yyyy년 M월 d일", Locale.KOREA)
 
-        fun bind(diary: Diary) {
+        fun bind(diary: Diary, groupName: String) {
             binding.apply {
                 dateText.text = dateFormat.format(diary.createdAt.toDate())
-                groupChip.text = diary.groupId
+                groupNameText.text = groupName
                 moodChip.text = diary.mood
                 contentText.text = diary.content
 

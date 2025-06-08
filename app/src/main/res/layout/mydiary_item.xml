@@ -1,67 +1,93 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.card.MaterialCardView
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="8dp"
-    app:cardElevation="2dp">
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_margin="12dp"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="4dp"
+    app:strokeWidth="1dp"
+    app:strokeColor="@color/cardview_light_background">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:padding="16dp">
 
-        <com.google.android.material.textview.MaterialTextView
-            android:id="@+id/dateText"
-            android:layout_width="wrap_content"
+        <!-- 날짜 & 기분 -->
+        <LinearLayout
+            android:id="@+id/topLayout"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
+            android:orientation="horizontal"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            tools:text="2024년 5월 21일" />
+            app:layout_constraintEnd_toEndOf="parent"
+            android:gravity="center_vertical">
 
-        <com.google.android.material.chip.Chip
-            android:id="@+id/groupChip"
-            android:layout_width="wrap_content"
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/dateText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
+                android:textColor="@color/textPrimary"
+                tools:text="2025년 6월 8일" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/moodChip"
+                style="@style/Widget.App.Chip"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:text="기쁨"
+                android:checkable="false"
+                android:clickable="false" />
+        </LinearLayout>
+
+        <!-- 그룹명 -->
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/groupNameText"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            app:layout_constraintStart_toEndOf="@id/dateText"
-            app:layout_constraintTop_toTopOf="@id/dateText"
-            app:layout_constraintBottom_toBottomOf="@id/dateText"
-            tools:text="오늘의 칭찬" />
 
-        <com.google.android.material.chip.Chip
-            android:id="@+id/moodChip"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            app:layout_constraintStart_toEndOf="@id/groupChip"
-            app:layout_constraintTop_toTopOf="@id/dateText"
-            app:layout_constraintBottom_toBottomOf="@id/dateText"
-            tools:text="기쁨" />
+            android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
+            android:textColor="@color/textPrimary"
+            android:maxLines="1"
+            android:ellipsize="end"
+            app:layout_constraintTop_toBottomOf="@id/topLayout"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            tools:text="행복한 사람들 모임" />
 
+        <!-- 내용 -->
         <com.google.android.material.textview.MaterialTextView
             android:id="@+id/contentText"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
-            android:maxLines="3"
+            android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
+            android:textColor="@color/textSecondary"
+            android:maxLines="4"
             android:ellipsize="end"
-            app:layout_constraintTop_toBottomOf="@id/dateText"
-            tools:text="일기 내용이 여기에 표시됩니다..." />
+            app:layout_constraintTop_toBottomOf="@id/groupNameText"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            tools:text="오늘은 진짜 기분이 좋았다. 하늘도 맑고 나도 맑은 느낌이다." />
 
+        <!-- 이미지 -->
         <com.google.android.material.imageview.ShapeableImageView
             android:id="@+id/diaryImage"
-            android:layout_width="match_parent"
-            android:layout_height="200dp"
-            android:layout_marginTop="8dp"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
             android:scaleType="centerCrop"
             app:layout_constraintTop_toBottomOf="@id/contentText"
-            app:shapeAppearance="@style/ShapeAppearance.Material3.MediumComponent" />
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.MediumComponent"
+            tools:src="@drawable/groupimage_example" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-</com.google.android.material.card.MaterialCardView> 
+</com.google.android.material.card.MaterialCardView>

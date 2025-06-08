@@ -33,65 +33,46 @@
         android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
         android:layout_marginBottom="8dp" />
 
-    <RadioGroup
-        android:id="@+id/dateTypeRadioGroup"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
         android:layout_marginBottom="8dp">
 
-        <com.google.android.material.radiobutton.MaterialRadioButton
-            android:id="@+id/specificDateRadio"
-            android:layout_width="match_parent"
+        <ImageButton
+            android:id="@+id/previousMonthButton"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_chevron_left"
+            android:contentDescription="이전 달" />
+
+        <TextView
+            android:id="@+id/monthYearText"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="특정 날짜" />
+            android:layout_weight="1"
+            android:gravity="center"
+            android:textSize="18sp"
+            android:textColor="@color/textPrimary"
+            android:text="2024년 3월" />
 
-        <com.google.android.material.radiobutton.MaterialRadioButton
-            android:id="@+id/dateRangeRadio"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="기간 선택" />
-
-    </RadioGroup>
-
-    <LinearLayout
-        android:id="@+id/specificDateContainer"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:visibility="gone">
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/specificDateButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="날짜 선택하기"
-            style="@style/Widget.Material3.Button.OutlinedButton" />
-
+        <ImageButton
+            android:id="@+id/nextMonthButton"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_chevron_right"
+            android:contentDescription="다음 달" />
     </LinearLayout>
 
-    <LinearLayout
-        android:id="@+id/dateRangeContainer"
+    <com.kizitonwose.calendar.view.CalendarView
+        android:id="@+id/calendarView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:visibility="gone">
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/startDateButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="시작일 선택"
-            style="@style/Widget.Material3.Button.OutlinedButton"
-            android:layout_marginBottom="8dp" />
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/endDateButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="종료일 선택"
-            style="@style/Widget.Material3.Button.OutlinedButton" />
-
-    </LinearLayout>
+        app:cv_dayViewResource="@layout/mydiary_filter_calendar_day"
+        android:layout_marginBottom="16dp" />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/applyButton"
