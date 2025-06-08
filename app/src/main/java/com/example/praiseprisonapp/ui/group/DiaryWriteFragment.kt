@@ -1,7 +1,9 @@
 package com.example.praiseprisonapp.ui.group
 
+import android.Manifest
 import android.app.Activity
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
@@ -41,6 +43,27 @@ class DiaryWriteFragment : Fragment() {
     private var tempPhotoUri: Uri? = null
     private var selectedMood: String? = null
     private lateinit var groupId: String
+
+    // 권한 요청을 위한 launcher 추가
+    private val requestCameraPermission = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            openCamera()
+        } else {
+            Toast.makeText(context, "카메라 권한이 필요합니다", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private val requestGalleryPermission = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            openGallery()
+        } else {
+            Toast.makeText(context, "갤러리 접근 권한이 필요합니다", Toast.LENGTH_SHORT).show()
+        }
+    }
 
     private val galleryLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
@@ -136,26 +159,64 @@ class DiaryWriteFragment : Fragment() {
             .setTitle("사진 첨부")
             .setItems(items) { _, which ->
                 when (which) {
-                    0 -> {
-                        val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
-                        galleryLauncher.launch(intent)
-                    }
-                    1 -> {
-                        val photoFile = File.createTempFile("photo_", ".jpg", requireContext().cacheDir)
-                        tempPhotoUri = FileProvider.getUriForFile(
-                            requireContext(),
-                            "${requireContext().packageName}.provider",
-                            photoFile
-                        )
-                        
-                        val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE).apply {
-                            putExtra(MediaStore.EXTRA_OUTPUT, tempPhotoUri)
-                        }
-                        cameraLauncher.launch(intent)
-                    }
+                    0 -> checkGalleryPermission()
+                    1 -> checkCameraPermission()
                 }
             }
             .show()
+    }
+
+    private fun checkCameraPermission() {
+        when {
+            ContextCompat.checkSelfPermission(
+                requireContext(),
+                Manifest.permission.CAMERA
+            ) == PackageManager.PERMISSION_GRANTED -> {
+                openCamera()
+            }
+            else -> {
+                requestCameraPermission.launch(Manifest.permission.CAMERA)
+            }
+        }
+    }
+
+    private fun checkGalleryPermission() {
+        val permission = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            Manifest.permission.READ_MEDIA_IMAGES
+        } else {
+            Manifest.permission.READ_EXTERNAL_STORAGE
+        }
+
+        when {
+            ContextCompat.checkSelfPermission(
+                requireContext(),
+                permission
+            ) == PackageManager.PERMISSION_GRANTED -> {
+                openGallery()
+            }
+            else -> {
+                requestGalleryPermission.launch(permission)
+            }
+        }
+    }
+
+    private fun openCamera() {
+        val photoFile = File.createTempFile("photo_", ".jpg", requireContext().cacheDir)
+        tempPhotoUri = FileProvider.getUriForFile(
+            requireContext(),
+            "${requireContext().packageName}.fileprovider",
+            photoFile
+        )
+        
+        val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE).apply {
+            putExtra(MediaStore.EXTRA_OUTPUT, tempPhotoUri)
+        }
+        cameraLauncher.launch(intent)
+    }
+
+    private fun openGallery() {
+        val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
+        galleryLauncher.launch(intent)
     }
 
     private fun showImagePreview(uri: Uri) {

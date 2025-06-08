@@ -79,6 +79,28 @@ class GroupDetailFragment : Fragment(R.layout.group_detail) {
                             authorName = authorName
                         )
                         diaryList.add(diary)
+                        
+                        // 각 일기의 댓글 수를 실시간으로 가져오기
+                        db.collection("comments")
+                            .whereEqualTo("diaryId", diary.id)
+                            .addSnapshotListener { commentsSnapshot, commentsError ->
+                                if (commentsError != null) return@addSnapshotListener
+                                
+                                val commentCount = commentsSnapshot?.documents?.size ?: 0
+                                
+                                // Firestore에 댓글 수 업데이트
+                                db.collection("diaries")
+                                    .document(diary.id)
+                                    .update("commentCount", commentCount)
+                                    .addOnSuccessListener {
+                                        // 해당 일기의 댓글 수 업데이트
+                                        val position = diaryList.indexOfFirst { it.id == diary.id }
+                                        if (position != -1) {
+                                            diaryList[position] = diary.copy(commentCount = commentCount)
+                                            adapter.notifyItemChanged(position)
+                                        }
+                                    }
+                            }
                     }
                     adapter.notifyDataSetChanged()
                 }

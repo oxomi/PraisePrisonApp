@@ -3,16 +3,12 @@ package com.example.praiseprisonapp.ui.group
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.EditText
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
-import androidx.fragment.app.Fragment
-import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.praiseprisonapp.R
-import com.example.praiseprisonapp.data.model.CommentData
 import com.example.praiseprisonapp.data.model.DiaryData
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
@@ -28,15 +24,14 @@ class DiaryAdapter(private val diaryList: List<DiaryData>) :
     private val auth = FirebaseAuth.getInstance()
 
     class DiaryViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        val tvTitle: TextView = itemView.findViewById(R.id.dateText)
+        val test1: TextView = itemView.findViewById(R.id.test1)
+        val dateText: TextView = itemView.findViewById(R.id.dateText)
+        val moodChip: Chip = itemView.findViewById(R.id.moodChip)
         val tvContent: TextView = itemView.findViewById(R.id.contentText)
         val ivDiaryImage: ImageView = itemView.findViewById(R.id.diaryImage)
         val existingReactions: ChipGroup = itemView.findViewById(R.id.existingReactions)
         val btnAddReaction: ImageButton = itemView.findViewById(R.id.btnAddReaction)
         val tvCommentsCount: TextView = itemView.findViewById(R.id.tvCommentsCount)
-        val rvComments: RecyclerView = itemView.findViewById(R.id.rvComments)
-        val etComment: EditText = itemView.findViewById(R.id.etComment)
-        val btnSendComment: ImageButton = itemView.findViewById(R.id.btnSendComment)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): DiaryViewHolder {
@@ -50,8 +45,24 @@ class DiaryAdapter(private val diaryList: List<DiaryData>) :
         val context = holder.itemView.context
         
         // 제목 (작성자 + 날짜)
-        val dateFormat = SimpleDateFormat("yyyy년 MM월 dd일", Locale.getDefault())
-        holder.tvTitle.text = "${diary.authorName}의 ${dateFormat.format(diary.createdAt.toDate())}"
+        val dateFormat = SimpleDateFormat("yyyy.MM.dd", Locale.getDefault())
+        
+        // 현재 사용자의 닉네임 가져오기
+        val currentUser = auth.currentUser
+        if (currentUser != null) {
+            db.collection("users").document(currentUser.uid)
+                .get()
+                .addOnSuccessListener { document ->
+                    if (document != null && document.exists()) {
+                        val nickname = document.getString("nickname") ?: currentUser.displayName
+                        holder.test1.text = nickname ?: ""
+                        holder.dateText.text = dateFormat.format(diary.createdAt.toDate())
+                    }
+                }
+        }
+        
+        // 감정
+        holder.moodChip.text = diary.mood
         
         // 내용
         holder.tvContent.text = diary.content
@@ -79,36 +90,6 @@ class DiaryAdapter(private val diaryList: List<DiaryData>) :
         // 리액션 추가 버튼
         holder.btnAddReaction.setOnClickListener {
             // TODO: 이모지 선택기 표시
-        }
-        
-        // 댓글 목록 설정
-        holder.rvComments.apply {
-            layoutManager = LinearLayoutManager(context)
-            adapter = CommentAdapter(emptyList()) // TODO: 실제 댓글 데이터 연결
-        }
-        
-        // 댓글 작성
-        holder.btnSendComment.setOnClickListener {
-            val content = holder.etComment.text.toString().trim()
-            if (content.isNotEmpty()) {
-                val currentUser = auth.currentUser
-                if (currentUser != null) {
-                    val comment = hashMapOf(
-                        "diaryId" to diary.id,
-                        "authorId" to currentUser.uid,
-                        "authorName" to currentUser.displayName,
-                        "content" to content,
-                        "createdAt" to com.google.firebase.Timestamp.now()
-                    )
-                    
-                    db.collection("comments")
-                        .add(comment)
-                        .addOnSuccessListener {
-                            holder.etComment.text.clear()
-                            // TODO: 댓글 목록 새로고침
-                        }
-                }
-            }
         }
         
         // 댓글 수
