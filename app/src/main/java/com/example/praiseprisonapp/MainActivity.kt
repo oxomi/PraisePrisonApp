@@ -120,4 +120,3 @@ class HomeMainFragment : Fragment(R.layout.home_main) {
 }
 
 class MyDiaryMainFragment : Fragment(R.layout.mydiary_main)
-//class ProfileFragment : Fragment(R.layout.profile_main)

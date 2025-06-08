@@ -90,7 +90,7 @@
                         android:background="?attr/selectableItemBackgroundBorderless"
                         android:contentDescription="리액션 추가"
                         android:padding="8dp"
-                        android:src="@drawable/ic_adddiary" />
+                        android:src="@drawable/ic_plus_reaction" />
 
                 </LinearLayout>
 
