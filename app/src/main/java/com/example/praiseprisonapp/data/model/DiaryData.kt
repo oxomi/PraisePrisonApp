@@ -14,7 +14,7 @@ data class DiaryData(
     val imageUrl: String = "",
     val mood: String = "",
     val createdAt: Timestamp = Timestamp.now(),
-    val reactions: Map<String, Int> = mapOf(), // 이모지 -> 카운트
+    val reactions: Map<String, Int> = mapOf(),
     val commentCount: Int = 0
 ) : Parcelable {
     override fun describeContents(): Int {

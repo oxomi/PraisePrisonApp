@@ -64,19 +64,16 @@ class DiaryDetailFragment : Fragment(R.layout.diary_detail) {
         // 닉네임과 날짜 설정
         val dateFormat = SimpleDateFormat("yyyy.MM.dd", Locale.getDefault())
 
-        // 현재 사용자의 닉네임 가져오기
-        val currentUser = auth.currentUser
-        if (currentUser != null) {
-            db.collection("users").document(currentUser.uid)
-                .get()
-                .addOnSuccessListener { document ->
-                    if (document != null && document.exists()) {
-                        val nickname = document.getString("nickname") ?: currentUser.displayName
-                        view.findViewById<TextView>(R.id.tvNickname).text = nickname ?: ""
-                        view.findViewById<TextView>(R.id.tvDate).text = dateFormat.format(diaryData.createdAt.toDate())
-                    }
+        // 작성자의 닉네임 가져오기
+        db.collection("users").document(diaryData.authorId)
+            .get()
+            .addOnSuccessListener { document ->
+                if (document != null && document.exists()) {
+                    val nickname = document.getString("nickname") ?: diaryData.authorName
+                    view.findViewById<TextView>(R.id.tvNickname).text = nickname
+                    view.findViewById<TextView>(R.id.tvDate).text = dateFormat.format(diaryData.createdAt.toDate())
                 }
-        }
+            }
 
         // 감정 칩 설정
         view.findViewById<Chip>(R.id.moodChip).text = diaryData.mood
@@ -93,20 +90,63 @@ class DiaryDetailFragment : Fragment(R.layout.diary_detail) {
                 .into(ivDiaryImage)
         }
 
-        // 리액션
-        val existingReactions = view.findViewById<ChipGroup>(R.id.existingReactions)
-        diaryData.reactions.forEach { (reaction, count) ->
-            val chip = Chip(requireContext()).apply {
-                text = "$reaction $count"
-                isCheckable = false
-            }
-            existingReactions.addView(chip)
+        // 리액션 상태 및 카운트 설정
+        val btnReaction = view.findViewById<ImageButton>(R.id.btnReaction)
+        val tvReactionCount = view.findViewById<TextView>(R.id.tvReactionCount)
+        
+        // 현재 사용자의 리액션 상태 확인
+        auth.currentUser?.let { user ->
+            db.collection("diaries").document(diaryData.id)
+                .collection("reactions")
+                .document(user.uid)
+                .get()
+                .addOnSuccessListener { document ->
+                    val hasUserReacted = document.exists()
+                    btnReaction.setImageResource(
+                        if (hasUserReacted) R.drawable.ic_reaction_on
+                        else R.drawable.ic_reaction_off
+                    )
+                }
         }
 
-        // 리액션 추가 버튼
-        view.findViewById<ImageButton>(R.id.btnAddReaction).setOnClickListener {
-            // TODO: 이모지 선택기 표시
+        // 전체 리액션 수 표시
+        db.collection("diaries").document(diaryData.id)
+            .collection("reactions")
+            .addSnapshotListener { snapshot, e ->
+                if (e != null) return@addSnapshotListener
+                val reactionCount = snapshot?.documents?.size ?: 0
+                tvReactionCount.text = reactionCount.toString()
+            }
+
+        // 리액션 버튼 클릭 처리
+        btnReaction.setOnClickListener {
+            auth.currentUser?.let { user ->
+                val diaryRef = db.collection("diaries").document(diaryData.id)
+                val userReactionRef = diaryRef.collection("reactions").document(user.uid)
+
+                userReactionRef.get().addOnSuccessListener { document ->
+                    if (document.exists()) {
+                        // 리액션 제거
+                        userReactionRef.delete()
+                            .addOnSuccessListener {
+                                btnReaction.setImageResource(R.drawable.ic_reaction_off)
+                            }
+                    } else {
+                        // 리액션 추가
+                        userReactionRef.set(hashMapOf(
+                            "timestamp" to com.google.firebase.Timestamp.now(),
+                            "userId" to user.uid
+                        ))
+                            .addOnSuccessListener {
+                                btnReaction.setImageResource(R.drawable.ic_reaction_on)
+                            }
+                    }
+                }
+            }
         }
+
+        // 댓글 수 표시
+        view.findViewById<TextView>(R.id.tvCommentsCount).text = "댓글 ${diaryData.commentCount}개"
     }
 
     private fun setupComments(view: View) {
@@ -179,10 +219,6 @@ class DiaryDetailFragment : Fragment(R.layout.diary_detail) {
                         }
                     }
                     commentAdapter.notifyDataSetChanged()
-
-                    // 댓글 개수 업데이트
-                    view.findViewById<TextView>(R.id.tvCommentsLabel)?.text =
-                        "댓글 (${commentList.size})"
                 }
             }
     }
