@@ -61,19 +61,25 @@ class DiaryDetailFragment : Fragment(R.layout.diary_detail) {
     }
 
     private fun setupDiaryContent(view: View) {
+        // 작성자 닉네임 설정
+        val currentUserId = FirebaseAuth.getInstance().currentUser?.uid
+        if (diaryData.authorId == currentUserId) {
+            view.findViewById<TextView>(R.id.tvNickname).text = "나"
+        } else {
+            // 작성자의 닉네임 가져오기
+            db.collection("users").document(diaryData.authorId)
+                .get()
+                .addOnSuccessListener { document ->
+                    if (document != null && document.exists()) {
+                        val nickname = document.getString("nickname") ?: diaryData.authorName
+                        view.findViewById<TextView>(R.id.tvNickname).text = nickname
+                    }
+                }
+        }
+
         // 닉네임과 날짜 설정
         val dateFormat = SimpleDateFormat("yyyy.MM.dd", Locale.getDefault())
-
-        // 작성자의 닉네임 가져오기
-        db.collection("users").document(diaryData.authorId)
-            .get()
-            .addOnSuccessListener { document ->
-                if (document != null && document.exists()) {
-                    val nickname = document.getString("nickname") ?: diaryData.authorName
-                    view.findViewById<TextView>(R.id.tvNickname).text = nickname
-                    view.findViewById<TextView>(R.id.tvDate).text = dateFormat.format(diaryData.createdAt.toDate())
-                }
-            }
+        view.findViewById<TextView>(R.id.tvDate).text = dateFormat.format(diaryData.createdAt.toDate())
 
         // 감정 칩 설정
         view.findViewById<Chip>(R.id.moodChip).text = diaryData.mood
@@ -93,7 +99,7 @@ class DiaryDetailFragment : Fragment(R.layout.diary_detail) {
         // 리액션 상태 및 카운트 설정
         val btnReaction = view.findViewById<ImageButton>(R.id.btnReaction)
         val tvReactionCount = view.findViewById<TextView>(R.id.tvReactionCount)
-        
+
         // 현재 사용자의 리액션 상태 확인
         auth.currentUser?.let { user ->
             db.collection("diaries").document(diaryData.id)

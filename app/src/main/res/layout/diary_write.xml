@@ -59,6 +59,16 @@
                     android:textSize="16sp"
                     android:includeFontPadding="false" />
 
+                <TextView
+                    android:id="@+id/authorText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:textColor="@color/textPrimary"
+                    android:textSize="16sp"
+                    android:visibility="gone"
+                    android:includeFontPadding="false" />
+
             </LinearLayout>
 
             <!-- Mood Label -->
@@ -225,4 +235,4 @@
         app:cornerRadius="8dp"
         app:layout_constraintBottom_toBottomOf="parent" />
 
-</androidx.constraintlayout.widget.ConstraintLayout> 
+</androidx.constraintlayout.widget.ConstraintLayout>
