@@ -7,7 +7,6 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
-
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.praiseprisonapp.adapter.MyDiaryListAdapter
 import com.example.praiseprisonapp.databinding.MydiaryMainBinding
@@ -25,7 +24,10 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-class DiaryListFragment : Fragment() {
+data class GroupInfo(val id: String, val name: String)
+private var groupList: List<GroupInfo> = emptyList()
+
+class MyDiaryMainFragment : Fragment(R.layout.mydiary_main) {
 
     private var _binding: MydiaryMainBinding? = null
     private val binding get() = _binding!!
@@ -51,13 +53,8 @@ class DiaryListFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         setupRecyclerView()
-        setupToolbar()
-        loadDiaries()
-
-
-        Toast.makeText(requireContext(), "debug: 실행됨", Toast.LENGTH_SHORT).show()
-
-
+        setupFilterButton()
+        loadInitialData()
     }
 
     private fun setupRecyclerView() {
@@ -67,14 +64,20 @@ class DiaryListFragment : Fragment() {
         }
     }
 
-    private fun setupToolbar() {
-        binding.toolbar.setOnMenuItemClickListener { menuItem ->
-            when (menuItem.itemId) {
-                R.id.action_filter -> {
-                    showFilterDialog()
-                    true
-                }
-                else -> false
+    private fun setupFilterButton() {
+        binding.filterButton.setOnClickListener {
+            showFilterDialog()
+        }
+    }
+
+    private fun loadInitialData() {
+        lifecycleScope.launch {
+            try {
+                groupList = getUserGroups()
+                diaryAdapter.setGroups(groupList)
+                loadDiaries()
+            } catch (e: Exception) {
+                Toast.makeText(requireContext(), "데이터를 불러오는데 실패했습니다.", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -90,15 +93,11 @@ class DiaryListFragment : Fragment() {
             }
         }
 
-        // 사용자가 속한 그룹 목록 가져오기
-        lifecycleScope.launch {
-            val groups = getUserGroups()
-            filterDialog.setGroups(groups)
-            filterDialog.show(parentFragmentManager, "filter_dialog")
-        }
+        filterDialog.setGroups(groupList)
+        filterDialog.show(parentFragmentManager, "filter_dialog")
     }
 
-    private suspend fun getUserGroups(): List<String> = withContext(Dispatchers.IO) {
+    private suspend fun getUserGroups(): List<GroupInfo> = withContext(Dispatchers.IO) {
         try {
             val currentUserId = auth.currentUser?.uid ?: return@withContext emptyList()
             val groupsSnapshot = db.collection("groups")
@@ -106,7 +105,12 @@ class DiaryListFragment : Fragment() {
                 .get()
                 .await()
 
-            groupsSnapshot.documents.mapNotNull { it.getString("name") }
+            groupsSnapshot.documents.map { doc ->
+                GroupInfo(
+                    id = doc.id,
+                    name = doc.getString("name") ?: ""
+                )
+            }.filter { it.name.isNotEmpty() }
         } catch (e: Exception) {
             emptyList()
         }
@@ -115,20 +119,31 @@ class DiaryListFragment : Fragment() {
     private fun updateFilterInfo() {
         val filterText = buildString {
             append("현재 필터: ")
-            append(if (currentGroup.isEmpty()) "모든 그룹" else currentGroup)
+            val groupName = if (currentGroup.isEmpty()) {
+                "모든 그룹"
+            } else {
+                groupList.find { it.id == currentGroup }?.name ?: "(알 수 없는 그룹)"
+            }
+            append(groupName)
             append(" · ")
+
             if (currentStartDate != null && currentEndDate != null) {
-                if (currentStartDate == currentEndDate) {
-                    append(dateFormat.format(Date(currentStartDate!!)))
+                val sdf = SimpleDateFormat("yy.MM.dd", Locale.KOREA)
+                val startDate = Date(currentStartDate!!)
+                val endDate = Date(currentEndDate!!)
+
+                // 하루만 선택한 경우: endDate == startDate + 1일
+                val oneDayLater = currentStartDate!! + 24 * 60 * 60 * 1000
+                if (currentEndDate == oneDayLater) {
+                    append(sdf.format(startDate))
                 } else {
-                    append(dateFormat.format(Date(currentStartDate!!)))
-                    append(" ~ ")
-                    append(dateFormat.format(Date(currentEndDate!!)))
+                    append("${sdf.format(startDate)} - ${sdf.format(endDate)}")
                 }
             } else {
                 append("모든 기간")
             }
         }
+
         binding.filterInfoText.text = filterText
     }
 
@@ -141,7 +156,8 @@ class DiaryListFragment : Fragment() {
                     .whereEqualTo("authorId", currentUserId)
                     .orderBy("createdAt", Query.Direction.DESCENDING)
 
-                if (currentGroup.isNotEmpty()) {
+                // 전체 그룹이 아닌 경우에만 groupId 조건 추가
+                if (currentGroup.isNotEmpty() && currentGroup != "전체 그룹") {
                     query = query.whereEqualTo("groupId", currentGroup)
                 }
 
@@ -157,7 +173,7 @@ class DiaryListFragment : Fragment() {
                     binding.emptyView.visibility = if (diaries.isEmpty()) View.VISIBLE else View.GONE
                 }
             } catch (e: Exception) {
-                // 에러 처리
+                Toast.makeText(requireContext(), "일기 목록을 불러오는데 실패했습니다.", Toast.LENGTH_SHORT).show()
             }
         }
     }
