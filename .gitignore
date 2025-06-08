@@ -57,10 +57,6 @@ app/praiseprisonapp-firebase-adminsdk-fbsvc-a457701c5e.json
 # Android Profiling
 *.hprof
 
-# Gradle wrapper
-!gradle/wrapper/gradle-wrapper.jar
-!gradle/wrapper/gradle-wrapper.properties
-
 # Log Files
 *.log
 

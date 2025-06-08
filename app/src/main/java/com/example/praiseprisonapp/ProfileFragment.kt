@@ -10,7 +10,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
-import com.example.praiseprisonapp.databinding.ProfileBinding
+import com.example.praiseprisonapp.databinding.ProfileFragmentBinding
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import java.util.*
@@ -24,7 +24,7 @@ import java.time.format.DateTimeFormatter
 import com.google.firebase.Timestamp
 
 class ProfileFragment : Fragment() {
-    private var _binding: ProfileBinding? = null
+    private var _binding: ProfileFragmentBinding? = null
     private val binding get() = _binding!!
     private lateinit var auth: FirebaseAuth
     private lateinit var db: FirebaseFirestore
@@ -37,7 +37,7 @@ class ProfileFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        _binding = ProfileBinding.inflate(inflater, container, false)
+        _binding = ProfileFragmentBinding.inflate(inflater, container, false)
         return binding.root
     }
 
@@ -50,10 +50,10 @@ class ProfileFragment : Fragment() {
 
         // 현재 사용자 정보 표시
         loadUserInfo()
-        
+
         // 캘린더 설정
         setupCalendar()
-        
+
         // 알림 설정 초기화 및 리스너 설정
         setupNotificationSettings()
 
@@ -91,7 +91,7 @@ class ProfileFragment : Fragment() {
 
     private fun setupCalendar() {
         val user = auth.currentUser ?: return
-        
+
         // 캘린더 초기 설정
         val currentMonth = YearMonth.now()
         val startMonth = currentMonth.minusMonths(12)  // 12개월 전부터
@@ -99,8 +99,8 @@ class ProfileFragment : Fragment() {
         val firstDayOfWeek = WeekFields.of(Locale.getDefault()).firstDayOfWeek
 
         binding.attendanceCalendar.apply {
-            dayViewResource = R.layout.calendar_day
-            monthHeaderResource = R.layout.calendar_month
+            dayViewResource = R.layout.profile_calendar_day
+            monthHeaderResource = R.layout.profile_calendar_month
 
             monthHeaderBinder = object : MonthHeaderFooterBinder<MonthViewContainer> {
                 override fun create(view: View) = MonthViewContainer(view)
@@ -114,14 +114,14 @@ class ProfileFragment : Fragment() {
                 override fun bind(container: DayViewContainer, data: CalendarDay) {
                     val date = data.date
                     container.textView.text = date.dayOfMonth.toString()
-                    
+
                     // 일기 작성 날짜 표시
                     if (writtenDates.contains(date)) {
                         container.textView.setTextColor(Color.RED)
                     } else {
                         container.textView.setTextColor(Color.BLACK)
                     }
-                    
+
                     container.view.setOnClickListener {
                         if (writtenDates.contains(date)) {
                             Toast.makeText(requireContext(), "이 날짜에 작성한 일기가 있습니다.", Toast.LENGTH_SHORT).show()
@@ -158,7 +158,7 @@ class ProfileFragment : Fragment() {
                     }
                 }
                 binding.attendanceCalendar.notifyCalendarChanged()
-                
+
                 // 출석 일수 표시
                 binding.monthYearText.text = "${writtenDates.size}일 작성"
             }

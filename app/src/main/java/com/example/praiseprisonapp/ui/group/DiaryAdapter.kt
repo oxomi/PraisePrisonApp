@@ -28,9 +28,9 @@ class DiaryAdapter(private val diaryList: List<DiaryData>) :
     private val auth = FirebaseAuth.getInstance()
 
     class DiaryViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        val tvTitle: TextView = itemView.findViewById(R.id.tvTitle)
-        val tvContent: TextView = itemView.findViewById(R.id.tvContent)
-        val ivDiaryImage: ImageView = itemView.findViewById(R.id.ivDiaryImage)
+        val tvTitle: TextView = itemView.findViewById(R.id.dateText)
+        val tvContent: TextView = itemView.findViewById(R.id.contentText)
+        val ivDiaryImage: ImageView = itemView.findViewById(R.id.diaryImage)
         val existingReactions: ChipGroup = itemView.findViewById(R.id.existingReactions)
         val btnAddReaction: ImageButton = itemView.findViewById(R.id.btnAddReaction)
         val tvCommentsCount: TextView = itemView.findViewById(R.id.tvCommentsCount)
@@ -41,7 +41,7 @@ class DiaryAdapter(private val diaryList: List<DiaryData>) :
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): DiaryViewHolder {
         val view = LayoutInflater.from(parent.context)
-            .inflate(R.layout.item_diary, parent, false)
+            .inflate(R.layout.item_group_diary, parent, false)
         return DiaryViewHolder(view)
     }
 
