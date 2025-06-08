@@ -38,6 +38,16 @@
             app:layout_constraintStart_toEndOf="@id/test1"
             app:layout_constraintBaseline_toBaselineOf="@id/test1" />
 
+        <ImageView
+            android:id="@+id/weatherIcon"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_marginStart="8dp"
+            android:contentDescription="날씨"
+            app:layout_constraintStart_toEndOf="@id/dateText"
+            app:layout_constraintTop_toTopOf="@id/dateText"
+            app:layout_constraintBottom_toBottomOf="@id/dateText" />
+
         <com.google.android.material.chip.Chip
             android:id="@+id/moodChip"
             android:layout_width="wrap_content"

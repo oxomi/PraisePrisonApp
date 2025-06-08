@@ -29,6 +29,7 @@ class DiaryAdapter(private val diaries: List<DiaryData>) :
         private val diaryCard: MaterialCardView = itemView.findViewById(R.id.diaryCard)
         val test1: TextView = itemView.findViewById(R.id.test1)
         val dateText: TextView = itemView.findViewById(R.id.dateText)
+        val weatherIcon: ImageView = itemView.findViewById(R.id.weatherIcon)
         val moodChip: Chip = itemView.findViewById(R.id.moodChip)
         val tvContent: TextView = itemView.findViewById(R.id.contentText)
         val ivDiaryImage: ImageView = itemView.findViewById(R.id.diaryImage)
@@ -64,6 +65,18 @@ class DiaryAdapter(private val diaries: List<DiaryData>) :
                         }
                     }
             }
+
+            // 날씨 아이콘 설정
+            val iconResId = when (diary.weatherType) {
+                1 -> R.drawable.ic_weather_sunny
+                2 -> R.drawable.ic_weather_cloudy
+                3 -> R.drawable.ic_weather_rain
+                4 -> R.drawable.ic_weather_snow
+                5 -> R.drawable.ic_weather_thunderstorm
+                else -> R.drawable.ic_weather_sunny
+            }
+            weatherIcon.setImageResource(iconResId)
+            weatherIcon.visibility = View.VISIBLE
 
             // 감정
             moodChip.text = diary.mood

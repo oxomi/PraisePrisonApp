@@ -81,6 +81,19 @@ class DiaryDetailFragment : Fragment(R.layout.diary_detail) {
         val dateFormat = SimpleDateFormat("yyyy.MM.dd", Locale.getDefault())
         view.findViewById<TextView>(R.id.tvDate).text = dateFormat.format(diaryData.createdAt.toDate())
 
+        // 날씨 아이콘 설정
+        val weatherIcon = view.findViewById<ImageView>(R.id.weatherIcon)
+        val iconResId = when (diaryData.weatherType) {
+            1 -> R.drawable.ic_weather_sunny
+            2 -> R.drawable.ic_weather_cloudy
+            3 -> R.drawable.ic_weather_rain
+            4 -> R.drawable.ic_weather_snow
+            5 -> R.drawable.ic_weather_thunderstorm
+            else -> R.drawable.ic_weather_sunny
+        }
+        weatherIcon.setImageResource(iconResId)
+        weatherIcon.visibility = View.VISIBLE
+
         // 감정 칩 설정
         view.findViewById<Chip>(R.id.moodChip).text = diaryData.mood
 

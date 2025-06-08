@@ -15,7 +15,8 @@ data class DiaryData(
     val mood: String = "",
     val createdAt: Timestamp = Timestamp.now(),
     val reactions: Map<String, Int> = mapOf(),
-    val commentCount: Int = 0
+    val commentCount: Int = 0,
+    val weatherType: Int = 1  // 1: 맑음, 2: 흐림, 3: 비, 4: 눈, 5: 천둥번개
 ) : Parcelable {
     override fun describeContents(): Int {
         return 0

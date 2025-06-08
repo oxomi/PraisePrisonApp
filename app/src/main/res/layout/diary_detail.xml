@@ -60,6 +60,17 @@
                 app:layout_constraintBaseline_toBaselineOf="@id/tvNickname"
                 tools:text="2025.06.08" />
 
+            <!-- 날씨 -->
+            <ImageView
+                android:id="@+id/weatherIcon"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginStart="8dp"
+                android:contentDescription="날씨"
+                app:layout_constraintStart_toEndOf="@id/tvDate"
+                app:layout_constraintTop_toTopOf="@id/tvDate"
+                app:layout_constraintBottom_toBottomOf="@id/tvDate" />
+
             <!-- 감정 -->
             <com.google.android.material.chip.Chip
                 android:id="@+id/moodChip"
