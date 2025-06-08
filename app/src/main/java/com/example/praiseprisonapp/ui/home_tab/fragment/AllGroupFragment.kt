@@ -90,24 +90,22 @@ class AllGroupFragment : Fragment(R.layout.home_all_group) {
     }
 
     private fun filterGroups(query: String) {
-        filteredGroups.clear()
-        if (query.isEmpty()) {
-            filteredGroups.addAll(allGroups)
+        val filtered = if (query.isEmpty()) {
+            allGroups
         } else {
             val searchQuery = query.lowercase()
-            filteredGroups.addAll(allGroups.filter { group ->
-                group.name.lowercase().contains(searchQuery) ||
-                group.description.lowercase().contains(searchQuery)
-            })
+            allGroups.filter {
+                it.name.lowercase().contains(searchQuery) ||
+                        it.description.lowercase().contains(searchQuery)
+            }
         }
-        groupAdapter.notifyDataSetChanged()
-        
-        // 검색 결과에 따라 빈 화면 표시
-        if (query.isEmpty()) {
-            updateEmptyView(allGroups.isEmpty(), "아직 생성된 그룹이 없습니다.")
-        } else {
-            updateEmptyView(filteredGroups.isEmpty(), "검색 결과가 없습니다.")
-        }
+
+        groupAdapter.updateData(filtered)
+
+        updateEmptyView(
+            isEmpty = filtered.isEmpty(),
+            message = if (query.isEmpty()) "아직 생성된 그룹이 없습니다." else "검색 결과가 없습니다."
+        )
     }
 
     private fun updateEmptyView(isEmpty: Boolean, message: String? = null) {

@@ -14,8 +14,15 @@ import com.example.praiseprisonapp.data.model.GroupData
 import com.example.praiseprisonapp.ui.group.GroupDetailFragment
 import com.google.android.material.card.MaterialCardView
 
-class GroupAdapter(private val groupList: List<GroupData>) : RecyclerView.Adapter<GroupAdapter.GroupViewHolder>() {
+class GroupAdapter(private var groupList: List<GroupData>) : RecyclerView.Adapter<GroupAdapter.GroupViewHolder>() {
+
+    fun updateData(newList: List<GroupData>) {
+        groupList = newList
+        notifyDataSetChanged()
+    }
+
     private val TAG = "GroupAdapter"
+
 
     class GroupViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val cardView: MaterialCardView = itemView as MaterialCardView
