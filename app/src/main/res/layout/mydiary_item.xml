@@ -7,8 +7,8 @@
     android:layout_margin="12dp"
     app:cardCornerRadius="16dp"
     app:cardElevation="4dp"
-    app:strokeWidth="1dp"
-    app:strokeColor="@color/cardview_light_background">
+    app:strokeWidth="0dp"
+    app:cardBackgroundColor="@color/other_diary_background">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
@@ -50,8 +50,8 @@
             android:id="@+id/groupNameText"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-
-            android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
+            android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
+            android:textStyle="bold"
             android:textColor="@color/textPrimary"
             android:maxLines="1"
             android:ellipsize="end"

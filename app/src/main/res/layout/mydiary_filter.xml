@@ -80,6 +80,7 @@
         android:layout_height="wrap_content"
         android:backgroundTint="@color/accent"
         android:text="적용하기"
+        android:textColor="@color/white"
         android:layout_marginTop="16dp" />
 
 </LinearLayout> 
