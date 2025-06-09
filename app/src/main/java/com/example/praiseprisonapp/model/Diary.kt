@@ -1,10 +1,8 @@
 package com.example.praiseprisonapp.model
 
 import com.google.firebase.Timestamp
-import com.google.firebase.firestore.DocumentId
 
 data class Diary(
-    @DocumentId
     val id: String = "",
     val authorId: String = "",
     val authorName: String = "",
