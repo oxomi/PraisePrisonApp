@@ -3,7 +3,9 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:padding="12dp">
+    android:padding="12dp"
+    android:layout_marginVertical="4dp"
+    android:background="@drawable/bg_content_white">
 
     <!-- Author Name -->
     <TextView
