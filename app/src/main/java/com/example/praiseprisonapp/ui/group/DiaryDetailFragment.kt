@@ -17,6 +17,7 @@ import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import java.text.SimpleDateFormat
@@ -28,6 +29,7 @@ class DiaryDetailFragment : Fragment(R.layout.diary_detail) {
     private val commentList = mutableListOf<CommentData>()
     private val db = FirebaseFirestore.getInstance()
     private val auth = FirebaseAuth.getInstance()
+    private lateinit var tvCommentsCount: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -165,7 +167,9 @@ class DiaryDetailFragment : Fragment(R.layout.diary_detail) {
         }
 
         // 댓글 수 표시
-        view.findViewById<TextView>(R.id.tvCommentsCount).text = "댓글 ${diaryData.commentCount}개"
+        tvCommentsCount = view.findViewById(R.id.tvCommentsCount)
+        tvCommentsCount.text = "댓글 ${diaryData.commentCount}개"
+
     }
 
     private fun setupComments(view: View) {
@@ -194,11 +198,43 @@ class DiaryDetailFragment : Fragment(R.layout.diary_detail) {
 
                     db.collection("comments")
                         .add(comment)
-                        .addOnSuccessListener {
+                        .addOnSuccessListener { documentRef ->
                             etComment.text.clear()
-                            // 댓글 카운트 증가
-                            db.collection("diaries").document(diaryData.id)
-                                .update("commentCount", diaryData.commentCount + 1)
+
+                            val currentUserId = currentUser.uid
+
+//
+                            // Firestore에서 닉네임 가져오기
+                            db.collection("users").document(currentUserId)
+                                .get()
+                                .addOnSuccessListener { userDoc ->
+                                    val nickname = userDoc.getString("nickname") ?: currentUser.displayName ?: "익명"
+
+                                    val newComment = CommentData(
+                                        id = documentRef.id,
+                                        diaryId = diaryData.id,
+                                        authorId = currentUserId,
+                                        authorName = nickname,
+                                        content = content,
+                                        createdAt = com.google.firebase.Timestamp.now()
+                                    )
+
+                                    commentList.add(newComment)
+                                    commentAdapter.notifyItemInserted(commentList.size - 1)
+                                    view.findViewById<RecyclerView>(R.id.rvComments)
+                                        .smoothScrollToPosition(commentList.size - 1)
+
+                                    db.collection("diaries").document(diaryData.id)
+                                        .update("commentCount", FieldValue.increment(1))
+                                    // UI 상 댓글 개수도 갱신
+                                    val currentCount = tvCommentsCount.text.toString()
+                                        .replace("댓글", "")
+                                        .replace("개", "")
+                                        .trim()
+                                        .toIntOrNull() ?: 0
+
+                                    tvCommentsCount.text = "댓글 ${currentCount + 1}개"
+                                }
                         }
                 }
             }
