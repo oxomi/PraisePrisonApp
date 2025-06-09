@@ -175,26 +175,35 @@ class GroupDetailFragment : Fragment(R.layout.group_detail) {
             .orderBy("createdAt", Query.Direction.DESCENDING)
             .addSnapshotListener { snapshot, e ->
                 if (e != null) {
+                    Log.e("GroupDetailFragment", "일기 목록 로드 실패: ${e.message}", e)
                     Toast.makeText(context, "일기 목록을 불러오는데 실패했습니다.", Toast.LENGTH_SHORT).show()
                     return@addSnapshotListener
                 }
 
-                snapshot?.let { documents ->
-                    diaryList.clear()
-                    for (document in documents) {
-                        val rawDiary = document.toObject(DiaryData::class.java)
-                        val authorName = document.getString("authorName") ?: "알 수 없음"
-                        val diary = rawDiary.copy(
-                            id = document.id,
-                            authorName = authorName
-                        )
+                if (snapshot == null) {
+                    return@addSnapshotListener
+                }
+
+                diaryList.clear()
+                for (document in snapshot.documents) {
+                    val rawDiary = document.toObject(DiaryData::class.java)
+                    val authorName = document.getString("authorName") ?: "알 수 없음"
+                    val diary = rawDiary?.copy(
+                        id = document.id,
+                        authorName = authorName
+                    )
+                    
+                    if (diary != null) {
                         diaryList.add(diary)
 
                         // 각 일기의 댓글 수를 실시간으로 가져오기
                         db.collection("comments")
                             .whereEqualTo("diaryId", diary.id)
                             .addSnapshotListener { commentsSnapshot, commentsError ->
-                                if (commentsError != null) return@addSnapshotListener
+                                if (commentsError != null) {
+                                    Log.e("GroupDetailFragment", "댓글 수 로드 실패: ${commentsError.message}", commentsError)
+                                    return@addSnapshotListener
+                                }
 
                                 val commentCount = commentsSnapshot?.documents?.size ?: 0
 
@@ -210,10 +219,13 @@ class GroupDetailFragment : Fragment(R.layout.group_detail) {
                                             adapter.notifyItemChanged(position)
                                         }
                                     }
+                                    .addOnFailureListener { updateError ->
+                                        Log.e("GroupDetailFragment", "댓글 수 업데이트 실패: ${updateError.message}", updateError)
+                                    }
                             }
                     }
-                    adapter.notifyDataSetChanged()
                 }
+                adapter.notifyDataSetChanged()
             }
     }
 
