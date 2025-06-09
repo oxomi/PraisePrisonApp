@@ -527,17 +527,35 @@ class DiaryWriteFragment : Fragment() {
     }
 
     private fun openCamera() {
-        val photoFile = File.createTempFile("photo_", ".jpg", requireContext().cacheDir)
-        tempPhotoUri = FileProvider.getUriForFile(
-            requireContext(),
-            "${requireContext().packageName}.fileprovider",
-            photoFile
-        )
+        try {
+            val photoFile = File.createTempFile(
+                "photo_${System.currentTimeMillis()}", 
+                ".jpg", 
+                requireContext().cacheDir
+            )
+            
+            tempPhotoUri = FileProvider.getUriForFile(
+                requireContext(),
+                "com.example.praiseprisonapp.fileprovider",
+                photoFile
+            )
 
-        val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE).apply {
-            putExtra(MediaStore.EXTRA_OUTPUT, tempPhotoUri)
+            val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE).apply {
+                putExtra(MediaStore.EXTRA_OUTPUT, tempPhotoUri)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+            }
+
+            // 카메라 앱이 있는지 확인
+            intent.resolveActivity(requireContext().packageManager)?.let {
+                cameraLauncher.launch(intent)
+            } ?: run {
+                Toast.makeText(context, "카메라 앱을 찾을 수 없습니다.", Toast.LENGTH_SHORT).show()
+            }
+        } catch (e: Exception) {
+            Log.e("DiaryWriteFragment", "카메라 실행 중 오류 발생", e)
+            Toast.makeText(context, "카메라를 실행할 수 없습니다: ${e.message}", Toast.LENGTH_SHORT).show()
         }
-        cameraLauncher.launch(intent)
     }
 
     private fun openGallery() {
@@ -599,7 +617,9 @@ class DiaryWriteFragment : Fragment() {
                     }
                 }
                 .addOnFailureListener {
+                    Log.d("FirebaseStorage", "Storage ref: ${imageRef.path} | ${imageRef.bucket}")
                     Toast.makeText(context, "이미지 업로드 실패", Toast.LENGTH_SHORT).show()
+                    binding.sendButton.isEnabled = true
                 }
         }
     }
@@ -617,7 +637,9 @@ class DiaryWriteFragment : Fragment() {
             imageUrl = imageUrl,
             mood = selectedMood ?: "",
             createdAt = Timestamp.now(),
-            weatherType = currentWeatherType
+            weatherType = currentWeatherType,
+            commentCount = 0,
+            reactions = mapOf("stability" to 0)
         )
 
         diaryRef.set(diary)
