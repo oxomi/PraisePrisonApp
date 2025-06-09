@@ -17,6 +17,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.FieldValue
+import android.widget.TextView
 
 class GroupDetailFragment : Fragment(R.layout.group_detail) {
     private lateinit var groupData: GroupData
@@ -24,6 +25,8 @@ class GroupDetailFragment : Fragment(R.layout.group_detail) {
     private val diaryList = mutableListOf<DiaryData>()
     private val db = FirebaseFirestore.getInstance()
     private val auth = FirebaseAuth.getInstance()
+    private lateinit var emptyView: View
+    private lateinit var emptyText: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -48,6 +51,10 @@ class GroupDetailFragment : Fragment(R.layout.group_detail) {
     }
 
     private fun setupUI(view: View) {
+        // 빈 상태 뷰 설정
+        emptyView = view.findViewById(R.id.emptyView)
+        emptyText = view.findViewById(R.id.emptyText)
+
         // 툴바 설정
         view.findViewById<MaterialToolbar>(R.id.toolbar).apply {
             title = groupData.name
@@ -92,6 +99,21 @@ class GroupDetailFragment : Fragment(R.layout.group_detail) {
                     .addToBackStack(null)
                     .commit()
             }
+        }
+
+        updateEmptyView(true)
+    }
+
+    private fun updateEmptyView(showEmpty: Boolean) {
+        if (showEmpty && diaryList.isEmpty()) {
+            emptyView.visibility = View.VISIBLE
+            if (groupData.isMyGroup) {
+                emptyText.text = "아직 작성된 일기가 없습니다.\n첫 번째 일기를 작성해보세요! 📝"
+            } else {
+                emptyText.text = "아직 작성된 일기가 없습니다."
+            }
+        } else {
+            emptyView.visibility = View.GONE
         }
     }
 
@@ -168,7 +190,6 @@ class GroupDetailFragment : Fragment(R.layout.group_detail) {
         }
     }
 
-
     private fun loadDiaries() {
         db.collection("diaries")
             .whereEqualTo("groupId", groupData.id)
@@ -226,6 +247,7 @@ class GroupDetailFragment : Fragment(R.layout.group_detail) {
                     }
                 }
                 adapter.notifyDataSetChanged()
+                updateEmptyView(true)
             }
     }
 

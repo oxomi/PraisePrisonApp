@@ -4,17 +4,20 @@ import android.Manifest
 import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
+import android.util.Log
 import android.view.View
 import android.widget.ImageView
+import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
+import com.bumptech.glide.Glide
 import com.example.praiseprisonapp.R
 import com.example.praiseprisonapp.data.model.GroupData
 import com.google.android.material.textfield.TextInputLayout
@@ -23,15 +26,12 @@ import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-import android.widget.Toast
 import androidx.lifecycle.lifecycleScope
 import com.example.praiseprisonapp.data.repository.GroupRepository
 import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import java.util.UUID
-import android.graphics.Bitmap
-import android.util.Log
 
 class GroupCreateFragment : Fragment(R.layout.group_create) {
 
@@ -45,71 +45,43 @@ class GroupCreateFragment : Fragment(R.layout.group_create) {
     private lateinit var passwordInput: com.google.android.material.textfield.TextInputEditText
     private lateinit var createButton: com.google.android.material.button.MaterialButton
     private val groupRepository = GroupRepository()
+    private var tempPhotoUri: Uri? = null
+
+    // 갤러리 실행 결과 처리
+    private val galleryLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            result.data?.data?.let { uri ->
+                selectedImageUri = uri
+                showImagePreview(uri)
+            }
+        }
+    }
+
+    // 카메라 실행 결과 처리
+    private val cameraLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            tempPhotoUri?.let { uri ->
+                selectedImageUri = uri
+                showImagePreview(uri)
+            }
+        }
+    }
 
     // 카메라 권한 요청 결과 처리
-    private val requestCameraPermission = registerForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
+    private val requestCameraPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
         if (isGranted) {
             openCamera()
+        } else {
+            Toast.makeText(context, "카메라 권한이 필요합니다", Toast.LENGTH_SHORT).show()
         }
     }
 
     // 갤러리 권한 요청 결과 처리
-    private val requestGalleryPermission = registerForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
+    private val requestGalleryPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
         if (isGranted) {
             openGallery()
-        }
-    }
-
-    // 갤러리에서 선택한 이미지 결과 처리
-    private val pickImageLauncher = registerForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            result.data?.data?.let { uri ->
-                selectedImageUri = uri
-                groupImage.setImageURI(uri)
-            }
-        }
-    }
-
-    // 카메라로 찍은 사진 결과 처리
-    private val takePictureLauncher = registerForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            currentPhotoPath?.let { path ->
-                selectedImageUri = Uri.fromFile(File(path))
-                groupImage.setImageURI(selectedImageUri)
-            }
-        }
-    }
-
-    private suspend fun uploadImage(imageUri: Uri): String {
-        return try {
-            val storage = FirebaseStorage.getInstance()
-            val storageRef = storage.reference
-            val filename = "group_images/${UUID.randomUUID()}.jpg"
-            val imageRef = storageRef.child(filename)
-            
-            // Convert Uri to byte array
-            val bitmap = MediaStore.Images.Media.getBitmap(requireContext().contentResolver, imageUri)
-            val baos = ByteArrayOutputStream()
-            bitmap.compress(Bitmap.CompressFormat.JPEG, 80, baos)
-            val imageData = baos.toByteArray()
-            
-            // Upload byte array
-            val uploadTask = imageRef.putBytes(imageData)
-            val taskSnapshot = uploadTask.await()
-            
-            // Get download URL
-            imageRef.downloadUrl.await().toString()
-        } catch (e: Exception) {
-            Log.e("Storage", "Error uploading image: ${e.message}", e)
-            throw e
+        } else {
+            Toast.makeText(context, "갤러리 접근 권한이 필요합니다", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -227,14 +199,13 @@ class GroupCreateFragment : Fragment(R.layout.group_create) {
     }
 
     private fun showImagePickerDialog() {
-        val options = arrayOf("카메라로 촬영", "갤러리에서 선택")
-
-        AlertDialog.Builder(requireContext())
-            .setTitle("이미지 선택")
-            .setItems(options) { _, which ->
+        val items = arrayOf("갤러리에서 선택", "사진 촬영")
+        android.app.AlertDialog.Builder(requireContext())
+            .setTitle("사진 첨부")
+            .setItems(items) { _, which ->
                 when (which) {
-                    0 -> checkCameraPermission()
-                    1 -> checkGalleryPermission()
+                    0 -> checkGalleryPermission()
+                    1 -> checkCameraPermission()
                 }
             }
             .show()
@@ -275,25 +246,108 @@ class GroupCreateFragment : Fragment(R.layout.group_create) {
     }
 
     private fun openCamera() {
-        Intent(MediaStore.ACTION_IMAGE_CAPTURE).also { intent ->
-            intent.resolveActivity(requireActivity().packageManager)?.also {
-                val photoFile = createImageFile()
-                photoFile?.also {
-                    val photoURI = FileProvider.getUriForFile(
-                        requireContext(),
-                        "${requireContext().packageName}.fileprovider",
-                        it
-                    )
-                    intent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI)
-                    takePictureLauncher.launch(intent)
-                }
+        try {
+            val photoFile = File.createTempFile(
+                "photo_${System.currentTimeMillis()}", 
+                ".jpg", 
+                requireContext().cacheDir
+            )
+            
+            tempPhotoUri = FileProvider.getUriForFile(
+                requireContext(),
+                "com.example.praiseprisonapp.fileprovider",
+                photoFile
+            )
+
+            val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE).apply {
+                putExtra(MediaStore.EXTRA_OUTPUT, tempPhotoUri)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
             }
+
+            // 카메라 앱이 있는지 확인
+            intent.resolveActivity(requireContext().packageManager)?.let {
+                cameraLauncher.launch(intent)
+            } ?: run {
+                Toast.makeText(context, "카메라 앱을 찾을 수 없습니다.", Toast.LENGTH_SHORT).show()
+            }
+        } catch (e: Exception) {
+            Log.e("GroupCreateFragment", "카메라 실행 중 오류 발생", e)
+            Toast.makeText(context, "카메라를 실행할 수 없습니다: ${e.message}", Toast.LENGTH_SHORT).show()
         }
     }
 
     private fun openGallery() {
         val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
-        pickImageLauncher.launch(intent)
+        galleryLauncher.launch(intent)
+    }
+
+
+
+    private fun showImagePreview(uri: Uri) {
+        Glide.with(this)
+            .load(uri)
+            .into(groupImage)
+
+
+        // 이미지 선택 오버레이 숨기기
+        view?.findViewById<View>(R.id.imagePickerOverlay)?.apply {
+            visibility = View.GONE
+            alpha = 0f
+        }
+    }
+
+    private suspend fun uploadImage(imageUri: Uri): String {
+        return try {
+            val storage = FirebaseStorage.getInstance()
+            val storageRef = storage.reference
+            val filename = "group_images/${UUID.randomUUID()}.jpg"
+            val imageRef = storageRef.child(filename)
+            
+            // Convert Uri to byte array
+            val bitmap = MediaStore.Images.Media.getBitmap(requireContext().contentResolver, imageUri)
+            val rotateBitmap = rotateBitmapIfRequired(imageUri, bitmap)
+
+            val baos = ByteArrayOutputStream()
+            rotateBitmap.compress(Bitmap.CompressFormat.JPEG, 80, baos)
+            val imageData = baos.toByteArray()
+            
+            // Upload byte array
+            val uploadTask = imageRef.putBytes(imageData)
+            val taskSnapshot = uploadTask.await()
+            
+            // Get download URL
+            imageRef.downloadUrl.await().toString()
+
+        } catch (e: Exception) {
+            Log.e("Storage", "Error uploading image: ${e.message}", e)
+            throw e
+        }
+    }
+
+    private fun rotateBitmapIfRequired(uri: Uri, bitmap: Bitmap): Bitmap {
+        val inputStream = requireContext().contentResolver.openInputStream(uri)
+        val exif = androidx.exifinterface.media.ExifInterface(inputStream!!)
+        val orientation = exif.getAttributeInt(
+            androidx.exifinterface.media.ExifInterface.TAG_ORIENTATION,
+            androidx.exifinterface.media.ExifInterface.ORIENTATION_NORMAL
+        )
+
+        val rotatedBitmap = when (orientation) {
+            androidx.exifinterface.media.ExifInterface.ORIENTATION_ROTATE_90 -> rotateBitmap(bitmap, 90f)
+            androidx.exifinterface.media.ExifInterface.ORIENTATION_ROTATE_180 -> rotateBitmap(bitmap, 180f)
+            androidx.exifinterface.media.ExifInterface.ORIENTATION_ROTATE_270 -> rotateBitmap(bitmap, 270f)
+            else -> bitmap
+        }
+
+        inputStream.close()
+        return rotatedBitmap
+    }
+
+    private fun rotateBitmap(bitmap: Bitmap, degrees: Float): Bitmap {
+        val matrix = android.graphics.Matrix()
+        matrix.postRotate(degrees)
+        return Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
     }
 
     private fun createImageFile(): File? {

@@ -48,8 +48,15 @@ import java.util.*
 import kotlinx.coroutines.launch
 import android.location.Geocoder
 import com.example.praiseprisonapp.data.api.WeatherData
+
 import com.google.android.gms.tasks.CancellationTokenSource
-import com.google.android.gms.tasks.CancellationToken
+
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+import com.example.praiseprisonapp.network.ApiClient
+import com.example.praiseprisonapp.data.model.Advice
+
 
 class DiaryWriteFragment : Fragment() {
     private var _binding: DiaryWriteBinding? = null
@@ -155,6 +162,7 @@ class DiaryWriteFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         setupToolbar()
+        loadAdvice()
         setupMoodSelection()
         setupImageButtons()
         setupContentField()
@@ -178,6 +186,24 @@ class DiaryWriteFragment : Fragment() {
 
         checkLocationPermission()
     }
+
+    fun loadAdvice() {
+        ApiClient.instance.getRandomAdvice().enqueue(object : Callback<Advice> {
+            override fun onResponse(call: Call<Advice>, response: Response<Advice>) {
+                val advice = response.body()
+                if (advice != null) {
+                    binding.adviceTextView.text = "\"${advice.message}\"\n— ${advice.author}"
+                } else {
+                    Toast.makeText(requireContext(), "명언을 불러오지 못했습니다.", Toast.LENGTH_SHORT).show()
+                }
+            }
+
+            override fun onFailure(call: Call<Advice>, t: Throwable) {
+                Toast.makeText(requireContext(), "API 오류: ${t.message}", Toast.LENGTH_SHORT).show()
+            }
+        })
+    }
+
 
     private fun checkLocationPermission() {
         when {
@@ -501,17 +527,35 @@ class DiaryWriteFragment : Fragment() {
     }
 
     private fun openCamera() {
-        val photoFile = File.createTempFile("photo_", ".jpg", requireContext().cacheDir)
-        tempPhotoUri = FileProvider.getUriForFile(
-            requireContext(),
-            "${requireContext().packageName}.fileprovider",
-            photoFile
-        )
+        try {
+            val photoFile = File.createTempFile(
+                "photo_${System.currentTimeMillis()}", 
+                ".jpg", 
+                requireContext().cacheDir
+            )
+            
+            tempPhotoUri = FileProvider.getUriForFile(
+                requireContext(),
+                "com.example.praiseprisonapp.fileprovider",
+                photoFile
+            )
 
-        val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE).apply {
-            putExtra(MediaStore.EXTRA_OUTPUT, tempPhotoUri)
+            val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE).apply {
+                putExtra(MediaStore.EXTRA_OUTPUT, tempPhotoUri)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+            }
+
+            // 카메라 앱이 있는지 확인
+            intent.resolveActivity(requireContext().packageManager)?.let {
+                cameraLauncher.launch(intent)
+            } ?: run {
+                Toast.makeText(context, "카메라 앱을 찾을 수 없습니다.", Toast.LENGTH_SHORT).show()
+            }
+        } catch (e: Exception) {
+            Log.e("DiaryWriteFragment", "카메라 실행 중 오류 발생", e)
+            Toast.makeText(context, "카메라를 실행할 수 없습니다: ${e.message}", Toast.LENGTH_SHORT).show()
         }
-        cameraLauncher.launch(intent)
     }
 
     private fun openGallery() {
@@ -573,7 +617,9 @@ class DiaryWriteFragment : Fragment() {
                     }
                 }
                 .addOnFailureListener {
+                    Log.d("FirebaseStorage", "Storage ref: ${imageRef.path} | ${imageRef.bucket}")
                     Toast.makeText(context, "이미지 업로드 실패", Toast.LENGTH_SHORT).show()
+                    binding.sendButton.isEnabled = true
                 }
         }
     }
@@ -591,7 +637,9 @@ class DiaryWriteFragment : Fragment() {
             imageUrl = imageUrl,
             mood = selectedMood ?: "",
             createdAt = Timestamp.now(),
-            weatherType = currentWeatherType
+            weatherType = currentWeatherType,
+            commentCount = 0,
+            reactions = mapOf("stability" to 0)
         )
 
         diaryRef.set(diary)
