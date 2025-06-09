@@ -48,8 +48,15 @@ import java.util.*
 import kotlinx.coroutines.launch
 import android.location.Geocoder
 import com.example.praiseprisonapp.data.api.WeatherData
+
 import com.google.android.gms.tasks.CancellationTokenSource
-import com.google.android.gms.tasks.CancellationToken
+
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+import com.example.praiseprisonapp.network.ApiClient
+import com.example.praiseprisonapp.data.model.Advice
+
 
 class DiaryWriteFragment : Fragment() {
     private var _binding: DiaryWriteBinding? = null
@@ -155,6 +162,7 @@ class DiaryWriteFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         setupToolbar()
+        loadAdvice()
         setupMoodSelection()
         setupImageButtons()
         setupContentField()
@@ -178,6 +186,24 @@ class DiaryWriteFragment : Fragment() {
 
         checkLocationPermission()
     }
+
+    fun loadAdvice() {
+        ApiClient.instance.getRandomAdvice().enqueue(object : Callback<Advice> {
+            override fun onResponse(call: Call<Advice>, response: Response<Advice>) {
+                val advice = response.body()
+                if (advice != null) {
+                    binding.adviceTextView.text = "\"${advice.message}\"\n— ${advice.author}"
+                } else {
+                    Toast.makeText(requireContext(), "명언을 불러오지 못했습니다.", Toast.LENGTH_SHORT).show()
+                }
+            }
+
+            override fun onFailure(call: Call<Advice>, t: Throwable) {
+                Toast.makeText(requireContext(), "API 오류: ${t.message}", Toast.LENGTH_SHORT).show()
+            }
+        })
+    }
+
 
     private fun checkLocationPermission() {
         when {
