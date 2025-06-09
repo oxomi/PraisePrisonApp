@@ -46,6 +46,10 @@ import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlinx.coroutines.launch
+import android.location.Geocoder
+import com.example.praiseprisonapp.data.api.WeatherData
+import com.google.android.gms.tasks.CancellationTokenSource
+import com.google.android.gms.tasks.CancellationToken
 
 class DiaryWriteFragment : Fragment() {
     private var _binding: DiaryWriteBinding? = null
@@ -234,82 +238,194 @@ class DiaryWriteFragment : Fragment() {
         fusedLocationClient.removeLocationUpdates(locationCallback)
     }
 
+    @SuppressLint("MissingPermission")
     private fun fetchWeatherInfo(nx: Int, ny: Int) {
         val dateFormat = SimpleDateFormat("yyyyMMdd", Locale.getDefault())
-        val timeFormat = SimpleDateFormat("HHmm", Locale.getDefault())
         val now = Calendar.getInstance()
         
-        if (now.get(Calendar.MINUTE) < 45) {
-            now.add(Calendar.HOUR, -1)
+        // 3시간 단위로 baseTime 설정
+        val hour = now.get(Calendar.HOUR_OF_DAY)
+        val baseTime = when {
+            hour < 2 -> "2300"
+            hour < 5 -> "0200"
+            hour < 8 -> "0500"
+            hour < 11 -> "0800"
+            hour < 14 -> "1100"
+            hour < 17 -> "1400"
+            hour < 20 -> "1700"
+            hour < 23 -> "2000"
+            else -> "2300"
         }
-        
+
+        // 만약 baseTime이 2300이고 현재 시각이 00~02시 사이면 어제 날짜 사용
+        if (baseTime == "2300" && hour < 2) {
+            now.add(Calendar.DAY_OF_MONTH, -1)
+        }
+
         val baseDate = dateFormat.format(now.time)
-        val baseTime = timeFormat.format(now.time).substring(0, 2) + "00"
 
-        lifecycleScope.launch {
-            try {
-                val response = WeatherApiClient.weatherApi.getWeather(
-                    serviceKey = getString(R.string.weather_api_key),
-                    baseDate = baseDate,
-                    baseTime = baseTime,
-                    nx = nx,
-                    ny = ny
-                )
+        // 위치 정보 디버깅을 위한 로그 추가
+        Log.d("PraisePrison", "📍 위치 정보 요청 시작")
+        
+        // 위치 권한 다시 확인
+        when {
+            ContextCompat.checkSelfPermission(
+                requireContext(),
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED -> {
+                try {
+                    // 위치 요청 설정
+                    val locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 10000)
+                        .setWaitForAccurateLocation(true)  // 정확한 위치를 기다림
+                        .setMinUpdateDistanceMeters(100f)  // 최소 업데이트 거리
+                        .setMaxUpdateDelayMillis(5000)     // 최대 업데이트 지연 시간
+                        .build()
 
-                response.response.body?.items?.item?.let { items ->
-                    var sky = "1"  // 기본값: 맑음
-                    var pty = "0"  // 기본값: 없음
-                    var tmp = ""   // 기온
-
-                    for (item in items) {
-                        when (item.category) {
-                            "SKY" -> sky = item.fcstValue    // 하늘상태
-                            "PTY" -> pty = item.fcstValue    // 강수형태
-                            "TMP" -> tmp = "${item.fcstValue}°C"  // 기온
+                    // 현재 위치 가져오기
+                    val cancellationToken = CancellationTokenSource().token
+                    fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, cancellationToken)
+                        .addOnSuccessListener { location: Location? ->
+                            if (location != null) {
+                                Log.d("PraisePrison", "📍 현재 위치: 위도=${location.latitude}, 경도=${location.longitude}, 정확도=${location.accuracy}m")
+                                
+                                // Geocoder로 주소 정보 가져오기
+                                try {
+                                    val geocoder = Geocoder(requireContext(), Locale.KOREA)
+                                    val addresses = geocoder.getFromLocation(location.latitude, location.longitude, 1)
+                                    
+                                    if (!addresses.isNullOrEmpty()) {
+                                        val address = addresses[0]
+                                        Log.d("PraisePrison", "📍 주소: ${address.getAddressLine(0)}")
+                                    }
+                                } catch (e: Exception) {
+                                    Log.e("PraisePrison", "📍 주소 변환 실패", e)
+                                }
+                                
+                                // 격자 좌표로 변환
+                                val (convertedNx, convertedNy) = LocationConverter.convertToGrid(location.latitude, location.longitude)
+                                Log.d("PraisePrison", "📍 변환된 격자 좌표: nx=$convertedNx, ny=$convertedNy")
+                                
+                                // 날씨 정보 요청
+                                lifecycleScope.launch {
+                                    getWeatherInfo(baseDate, baseTime, convertedNx, convertedNy)
+                                }
+                            } else {
+                                Log.e("PraisePrison", "📍 위치 정보를 가져올 수 없습니다")
+                                showLocationError()
+                            }
                         }
-                    }
+                        .addOnFailureListener { e ->
+                            Log.e("PraisePrison", "📍 위치 정보 가져오기 실패", e)
+                            showLocationError()
+                        }
+                } catch (e: SecurityException) {
+                    Log.e("PraisePrison", "📍 위치 권한 오류", e)
+                    showLocationError()
+                }
+            }
+            else -> {
+                Log.d("PraisePrison", "📍 위치 권한 없음")
+                requestLocationPermission()
+            }
+        }
+    }
 
-                    val weatherCode = WeatherApiClient.mapSkyToWeatherCode(sky, pty)
-                    val weatherDescription = when (weatherCode) {
-                        "1" -> "맑음"
-                        "2" -> "흐림"
-                        "3" -> "비"
-                        "4" -> "눈"
-                        "5" -> "천둥번개"
-                        else -> "맑음"
-                    }
-                    Log.d("PraisePrison", "\uD83C\uDF24 현재 날씨: $weatherDescription ($tmp)")
+    private suspend fun getWeatherInfo(baseDate: String, baseTime: String, nx: Int, ny: Int) {
+        try {
+            Log.d("PraisePrison", "\uD83C\uDF24 날씨 정보 요청: baseDate=$baseDate, baseTime=$baseTime, nx=$nx, ny=$ny")
+            
+            val response = WeatherApiClient.weatherApi.getWeather(
+                serviceKey = getString(R.string.weather_api_key),
+                baseDate = baseDate,
+                baseTime = baseTime,
+                nx = nx,
+                ny = ny
+            )
 
-                    val weatherInfo = WeatherInfo(
-                        sky = weatherDescription,
-                        temperature = tmp,
+            // API 에러 코드 체크
+            if (response.response.header.resultCode != "00") {
+                Log.e("PraisePrison", "❌ API 에러: ${response.response.header.resultMsg} (${response.response.header.resultCode})")
+                activity?.runOnUiThread {
+                    updateWeatherDisplay(WeatherInfo(
+                        sky = "맑음",
+                        temperature = "0°C",
                         humidity = "",
                         rain = "",
                         wind = "",
-                        weatherCode = weatherCode
-                    )
-                    updateWeatherDisplay(weatherInfo)
+                        weatherCode = "1"
+                    ))
                 }
-            } catch (e: Exception) {
-                Log.e("PraisePrison", "❌ 날씨 정보 가져오기 실패")
+                return
+            }
+
+            val items = response.response.body?.items?.item ?: run {
+                Log.e("PraisePrison", "❌ 날씨 정보 응답이 비어있습니다")
+                activity?.runOnUiThread {
+                    updateWeatherDisplay(WeatherInfo(
+                        sky = "맑음",
+                        temperature = "0°C",
+                        humidity = "",
+                        rain = "",
+                        wind = "",
+                        weatherCode = "1"
+                    ))
+                }
+                return
+            }
+
+            // WeatherData를 사용하여 날씨 정보 파싱
+            val weatherData = WeatherData()
+            val weatherInfo = weatherData.parseWeatherData(response)
+            
+            activity?.runOnUiThread {
+                updateWeatherDisplay(weatherInfo)
+            }
+        } catch (e: Exception) {
+            Log.e("PraisePrison", "❌ 날씨 정보 가져오기 실패", e)
+            activity?.runOnUiThread {
+                updateWeatherDisplay(WeatherInfo(
+                    sky = "맑음",
+                    temperature = "0°C",
+                    humidity = "",
+                    rain = "",
+                    wind = "",
+                    weatherCode = "1"
+                ))
             }
         }
+    }
+
+    private fun showLocationError() {
+        Toast.makeText(requireContext(), "위치 정보를 가져올 수 없습니다. GPS 설정을 확인해주세요.", Toast.LENGTH_LONG).show()
+        // 기본값으로 부산 좌표 사용
+        val (defaultNx, defaultNy) = LocationConverter.convertToGrid(35.1631, 129.1637)
+        lifecycleScope.launch {
+            getWeatherInfo(
+                SimpleDateFormat("yyyyMMdd", Locale.getDefault()).format(Calendar.getInstance().time),
+                "0200",
+                defaultNx,
+                defaultNy
+            )
+        }
+    }
+
+    private fun requestLocationPermission() {
+        requestPermissions(
+            arrayOf(
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ),
+            LOCATION_PERMISSION_REQUEST_CODE
+        )
     }
 
     private var currentWeatherType: Int = 1  // 기본값: 맑음
 
     private fun updateWeatherDisplay(weatherInfo: WeatherInfo) {
-        // 날씨 코드를 weatherType으로 변환
-        currentWeatherType = when (weatherInfo.weatherCode) {
-            "1" -> 1  // 맑음
-            "2" -> 2  // 흐림
-            "3" -> 3  // 비
-            "4" -> 4  // 눈
-            "5" -> 5  // 천둥번개
-            else -> 1 // 기본값: 맑음
-        }
-        
-        // 날씨 아이콘 업데이트
+        currentWeatherInfo = weatherInfo
+        currentWeatherType = weatherInfo.weatherCode.toIntOrNull() ?: 1
+
+        // 날씨 아이콘 설정
         val iconResId = when (currentWeatherType) {
             1 -> R.drawable.ic_weather_sunny
             2 -> R.drawable.ic_weather_cloudy
@@ -318,22 +434,8 @@ class DiaryWriteFragment : Fragment() {
             5 -> R.drawable.ic_weather_thunderstorm
             else -> R.drawable.ic_weather_sunny
         }
-        
-        binding.weatherIcon.apply {
-            setImageResource(iconResId)
-            visibility = View.VISIBLE
-        }
-
-        // 로그에 현재 날씨 표시
-        val weatherName = when (currentWeatherType) {
-            1 -> "맑음"
-            2 -> "흐림"
-            3 -> "비"
-            4 -> "눈"
-            5 -> "천둥번개"
-            else -> "맑음"
-        }
-        Log.d("PraisePrison", "\uD83C\uDF24 현재 날씨: $weatherName (${weatherInfo.temperature})")
+        binding.weatherIcon.setImageResource(iconResId)
+        binding.weatherIcon.visibility = View.VISIBLE
     }
 
     private fun setupMoodSelection() {
@@ -516,5 +618,7 @@ class DiaryWriteFragment : Fragment() {
                 putString("group_id", groupId)
             }
         }
+
+        private const val LOCATION_PERMISSION_REQUEST_CODE = 1000
     }
 }

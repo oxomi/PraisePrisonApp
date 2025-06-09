@@ -65,11 +65,10 @@
                 android:id="@+id/weatherIcon"
                 android:layout_width="24dp"
                 android:layout_height="24dp"
-                android:layout_marginStart="8dp"
                 android:contentDescription="날씨"
-                app:layout_constraintStart_toEndOf="@id/tvDate"
-                app:layout_constraintTop_toTopOf="@id/tvDate"
-                app:layout_constraintBottom_toBottomOf="@id/tvDate" />
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="@id/tvNickname"
+                app:layout_constraintBottom_toBottomOf="@id/tvNickname" />
 
             <!-- 감정 -->
             <com.google.android.material.chip.Chip

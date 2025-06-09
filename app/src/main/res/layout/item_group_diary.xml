@@ -42,11 +42,10 @@
             android:id="@+id/weatherIcon"
             android:layout_width="24dp"
             android:layout_height="24dp"
-            android:layout_marginStart="8dp"
             android:contentDescription="날씨"
-            app:layout_constraintStart_toEndOf="@id/dateText"
-            app:layout_constraintTop_toTopOf="@id/dateText"
-            app:layout_constraintBottom_toBottomOf="@id/dateText" />
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@id/test1"
+            app:layout_constraintBottom_toBottomOf="@id/test1" />
 
         <com.google.android.material.chip.Chip
             android:id="@+id/moodChip"

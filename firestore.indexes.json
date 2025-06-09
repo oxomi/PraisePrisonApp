@@ -1,16 +1,16 @@
 {
   "indexes": [
     {
-      "collectionGroup": "comments",
+      "collectionGroup": "diaries",
       "queryScope": "COLLECTION",
       "fields": [
         {
-          "fieldPath": "diaryId",
+          "fieldPath": "groupId",
           "order": "ASCENDING"
         },
         {
           "fieldPath": "createdAt",
-          "order": "ASCENDING"
+          "order": "DESCENDING"
         }
       ]
     }

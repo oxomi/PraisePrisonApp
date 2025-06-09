@@ -44,56 +44,114 @@ class WeatherData {
     }
 
     fun parseWeatherData(response: WeatherResponse): WeatherInfo {
-        val items = response.response.body?.items?.item ?: emptyList()
-        
-        var temperature = ""
+        var sky = "1"    // Default sky condition: Clear
+        var pty = "0"    // Default precipitation type: None
+        var tmp = "0°C"  // Default temperature
         var humidity = ""
-        var rainProbability = ""
-        var windSpeed = ""
-        var weatherCode = "1" // 기본값: 맑음
-        var sky = "맑음"
+        var precipitation = "None"
+        var snowfall = "None"
 
-        for (item in items) {
+        val items = response.response.body?.items?.item ?: return getDefaultWeatherInfo()
+
+        // Log weather information details
+        Log.d("PraisePrison", "📊 Weather Details:")
+        items.forEach { item ->
+            Log.d("PraisePrison", "- ${item.category}: ${item.fcstValue}")
             when (item.category) {
-                "TMP" -> temperature = "${item.fcstValue}°C"
-                "REH" -> humidity = "${item.fcstValue}%"
-                "POP" -> rainProbability = "${item.fcstValue}%"
-                "WSD" -> windSpeed = "${item.fcstValue}m/s"
+                "SKY" -> {
+                    sky = item.fcstValue
+                    Log.d("PraisePrison", "☁️ Sky Condition: ${
+                        when(sky) {
+                            "1" -> "Clear"
+                            "3" -> "Mostly Cloudy"
+                            "4" -> "Cloudy"
+                            else -> "Unknown"
+                        }
+                    }")
+                }
                 "PTY" -> {
-                    weatherCode = when (item.fcstValue) {
-                        "0" -> "1" // 맑음
-                        "1" -> "2" // 비
-                        "2" -> "2" // 비/눈
-                        "3" -> "3" // 눈
-                        "4" -> "2" // 소나기
-                        else -> "1"
+                    pty = item.fcstValue
+                    Log.d("PraisePrison", "🌧️ Precipitation Type: ${
+                        when(pty) {
+                            "0" -> "None"
+                            "1" -> "Rain"
+                            "2" -> "Rain/Snow"
+                            "3" -> "Snow"
+                            "4" -> "Shower"
+                            "5" -> "Drizzle"
+                            "6" -> "Drizzle/Snow"
+                            "7" -> "Snow Flurries"
+                            else -> "Unknown"
+                        }
+                    }")
+                }
+                "TMP" -> {
+                    tmp = "${item.fcstValue}°C"
+                    Log.d("PraisePrison", "🌡️ Temperature: $tmp")
+                }
+                "REH" -> {
+                    humidity = "${item.fcstValue}%"
+                }
+                "PCP" -> {
+                    precipitation = when (item.fcstValue) {
+                        "강수없음" -> "No Precipitation"
+                        else -> item.fcstValue
                     }
                 }
-                "SKY" -> {
-                    sky = when (item.fcstValue) {
-                        "1" -> "맑음"
-                        "3" -> "구름많음"
-                        "4" -> "흐림"
-                        else -> "맑음"
-                    }
-                    if (weatherCode == "1") { // PTY가 없을 때만 SKY 코드로 날씨 아이콘 결정
-                        weatherCode = when (item.fcstValue) {
-                            "1" -> "1" // 맑음
-                            "3", "4" -> "4" // 흐림
-                            else -> "1"
-                        }
+                "SNO" -> {
+                    snowfall = when (item.fcstValue) {
+                        "적설없음" -> "No Snowfall"
+                        else -> item.fcstValue
                     }
                 }
             }
         }
 
+        val weatherCode = mapSkyToWeatherCode(sky, pty)
+        val weatherDescription = when (weatherCode) {
+            "1" -> "Clear"
+            "2" -> "Cloudy"
+            "3" -> "Rain"
+            "4" -> "Snow"
+            "5" -> "Thunderstorm"
+            else -> "Clear"
+        }
+        Log.d("PraisePrison", "\uD83C\uDF24 Final Weather: $weatherDescription ($tmp)")
+
         return WeatherInfo(
-            sky = sky,
-            temperature = temperature,
+            sky = weatherDescription,
+            temperature = tmp,
             humidity = humidity,
-            rain = rainProbability,
-            wind = windSpeed,
+            rain = precipitation,
+            wind = "",
             weatherCode = weatherCode
         )
+    }
+
+    private fun getDefaultWeatherInfo(): WeatherInfo {
+        return WeatherInfo(
+            sky = "Clear",
+            temperature = "0°C",
+            humidity = "",
+            rain = "",
+            wind = "",
+            weatherCode = "1"
+        )
+    }
+
+    private fun mapSkyToWeatherCode(sky: String, pty: String): String {
+        // Apply PTY first if present
+        return when (pty) {
+            "0" -> when (sky) {  // No precipitation
+                "1" -> "1"  // Clear
+                "3" -> "2"  // Mostly Cloudy
+                "4" -> "2"  // Cloudy
+                else -> "1" // Default to Clear
+            }
+            "1", "4", "5" -> "3"  // Rain, Shower, Drizzle
+            "2", "6" -> "3"       // Rain/Snow, Drizzle/Snow
+            "3", "7" -> "4"       // Snow, Snow Flurries
+            else -> "1"           // Default to Clear
+        }
     }
 } 
