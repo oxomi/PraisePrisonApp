@@ -85,3 +85,6 @@ obj/
 *.temp
 *.swp
 *~
+
+# TFLite models
+app/src/main/assets/sentiment_model_improved.tflite

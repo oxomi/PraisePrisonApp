@@ -33,7 +33,7 @@ class GroupDetailFragment : Fragment(R.layout.group_detail) {
         super.onCreate(savedInstanceState)
         arguments?.let {
             @Suppress("DEPRECATION")
-            groupData = it.getParcelable("group_data") as? GroupData
+            groupData = it.getParcelable<GroupData>("group_data")
                 ?: throw IllegalArgumentException("Group data is required")
         }
     }

@@ -57,7 +57,11 @@ import retrofit2.Callback
 import retrofit2.Response
 import com.example.praiseprisonapp.network.ApiClient
 import com.example.praiseprisonapp.data.model.Advice
-
+import com.example.praiseprisonapp.util.SentimentAnalyzer
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import androidx.appcompat.app.AlertDialog
 
 class DiaryWriteFragment : Fragment() {
     private var _binding: DiaryWriteBinding? = null
@@ -76,6 +80,7 @@ class DiaryWriteFragment : Fragment() {
     private var currentWeatherInfo: WeatherInfo? = null
     private lateinit var groupId: String
     private lateinit var progressBar: View
+    private lateinit var sentimentAnalyzer: SentimentAnalyzer
 
 
     private val requestLocationPermission = registerForActivityResult(
@@ -138,6 +143,7 @@ class DiaryWriteFragment : Fragment() {
         }
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity())
         setupLocationRequest()
+        sentimentAnalyzer = SentimentAnalyzer.getInstance(requireContext())
     }
 
     private fun setupLocationRequest() {
@@ -583,9 +589,80 @@ class DiaryWriteFragment : Fragment() {
 
     private fun setupSendButton() {
         binding.sendButton.setOnClickListener {
+            Log.d(TAG, "Send button clicked")
+            val content = binding.etContent.text.toString().trim()
+            if (content.isEmpty()) {
+                Toast.makeText(context, "내용을 입력해주세요", Toast.LENGTH_SHORT).show()
+                binding.etContent.error = "내용을 입력해주세요"
+                return@setOnClickListener
+            }
+
+            if (selectedMood == null) {
+                Toast.makeText(context, "오늘의 감정을 선택해주세요", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            // 감정 분석 수행
+            Log.d(TAG, "Starting sentiment analysis")
+            analyzeDiaryContent(content) {
+                Log.d(TAG, "Proceeding to save diary")
+                saveDiary()
+            }
+        }
+    }
+
+    private fun analyzeDiaryContent(content: String, onSuccess: () -> Unit) {
+        viewLifecycleOwner.lifecycleScope.launch {
+            Log.d(TAG, "일기 내용 감정 분석 시작")
+            val result = withContext(Dispatchers.Default) {
+                sentimentAnalyzer.analyze(content)
+            }
+            
+            when {
+                // 신뢰도가 매우 낮은 경우 (10% 미만)
+                result.confidence < 0.1 -> {
+                    Log.d(TAG, "감정 분석 신뢰도가 너무 낮음 (${String.format("%.1f", result.confidence * 100)}%) - 재확인 요청")
+                    showSentimentConfirmationDialog(result.emotion, content)
+                }
+                // 기쁨 그룹이 아닌 모든 감정은 부정적으로 처리
+                result.emotionGroup != SentimentAnalyzer.EmotionGroup.JOY -> {
+                    Log.d(TAG, "부정적 감정 감지됨 - 확인 다이얼로그 표시")
+                    showSentimentConfirmationDialog(result.emotion, content)
+                }
+                else -> {
+                    Log.d(TAG, "긍정적 감정 감지됨 - 일기 저장 진행")
+                    onSuccess()
+                }
+            }
+        }
+    }
+
+    private fun showSentimentConfirmationDialog(title: String, content: String) {
+        if (!isAdded) {
+            Log.w(TAG, "Fragment가 아직 추가되지 않음. 다이얼로그 표시 스킵")
+            return
+        }
+
+        val message = "부정적인 감정이 감지되었어요.\n긍정적인 말로 수정하는건 어떨까요?"
+        
+        activity?.let { activity ->
+            AlertDialog.Builder(activity)
+                .setMessage(message)
+                .setPositiveButton("네") { _, _ ->
+                    Log.d(TAG, "사용자가 텍스트 수정하기로 선택")
+                    // 작성 화면에 그대로 남아있게 됨 (수정 가능)
+                }
+                .setNegativeButton("아니오") { _, _ ->
+                    Log.d(TAG, "사용자가 수정하지 않고 게시하기로 선택")
+                    saveDiary()
+                }
+                .show()
+        } ?: run {
+            Log.w(TAG, "Activity가 null임. 다이얼로그 표시 스킵하고 바로 저장")
             saveDiary()
         }
     }
+
     private fun showLoading(isLoading: Boolean) {
         progressBar.isVisible = isLoading
         binding.sendButton.isEnabled = !isLoading
@@ -674,6 +751,8 @@ class DiaryWriteFragment : Fragment() {
     }
 
     companion object {
+        private const val TAG = "DiaryWriteFragment"
+        
         fun newInstance(groupId: String) = DiaryWriteFragment().apply {
             arguments = Bundle().apply {
                 putString("group_id", groupId)

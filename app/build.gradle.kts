@@ -80,4 +80,9 @@ dependencies {
     // Calendar
     implementation("com.kizitonwose.calendar:view:2.7.0")
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
+
+    // TensorFlow Lite
+    implementation("org.tensorflow:tensorflow-lite:2.14.0")
+    implementation("org.tensorflow:tensorflow-lite-support:0.4.4")
+    implementation("com.google.code.gson:gson:2.10.1")
 }
