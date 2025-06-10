@@ -1,4 +1,4 @@
-## 감정 분석 ML 적용 방법
+## 감정 분석 모델 적용 방법
 - hun3359_klue_bert_base_sentiment.ipynb 파일을 열어 실행 -> .tflite 파일 생성
 - 생성된 tflite 파일을 app/main/assets/ 에 저장
 
