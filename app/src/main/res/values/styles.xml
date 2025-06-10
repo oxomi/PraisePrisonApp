@@ -73,6 +73,11 @@
         <item name="android:textStyle">bold</item>
     </style>
 
+    <style name="CustomContentTextStyleLight">
+        <item name="android:textColor">@color/textPrimary</item>
+        <item name="android:textSize">14sp</item>
+    </style>
+
     <!-- 공통 라벨 텍스트 스타일 -->
     <style name="CustomLabelTextStyle">
         <item name="android:textColor">@color/textPrimary</item>
