@@ -53,6 +53,18 @@ class MyDiaryListAdapter : ListAdapter<Diary, MyDiaryListAdapter.DiaryViewHolder
                 moodChip.text = diary.mood
                 contentText.text = diary.content
 
+                // 날씨 아이콘 설정
+                val iconResId = when (diary.weatherType) {
+                    1 -> R.drawable.ic_weather_sunny
+                    2 -> R.drawable.ic_weather_cloudy
+                    3 -> R.drawable.ic_weather_rain
+                    4 -> R.drawable.ic_weather_snow
+                    5 -> R.drawable.ic_weather_thunderstorm
+                    else -> R.drawable.ic_weather_sunny
+                }
+                weatherIcon.setImageResource(iconResId)
+                weatherIcon.visibility = android.view.View.VISIBLE
+
                 diary.imageUrl?.let { url ->
                     if (url.isNotEmpty()) {
                         Glide.with(diaryImage)

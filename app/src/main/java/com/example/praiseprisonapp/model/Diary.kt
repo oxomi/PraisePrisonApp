@@ -11,5 +11,6 @@ data class Diary(
     val createdAt: Timestamp = Timestamp.now(),
     val groupId: String = "",
     val imageUrl: String? = null,
-    val mood: String = ""
+    val mood: String = "",
+    val weatherType: Int = 1  // 기본값을 맑음(1)으로 설정
 ) 
