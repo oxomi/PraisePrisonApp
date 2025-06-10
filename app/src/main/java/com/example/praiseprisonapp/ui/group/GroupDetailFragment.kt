@@ -27,6 +27,7 @@ class GroupDetailFragment : Fragment(R.layout.group_detail) {
     private val auth = FirebaseAuth.getInstance()
     private lateinit var emptyView: View
     private lateinit var emptyText: TextView
+    private lateinit var toolbar: MaterialToolbar
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -50,13 +51,35 @@ class GroupDetailFragment : Fragment(R.layout.group_detail) {
         loadDiaries()
     }
 
+    override fun onResume() {
+        super.onResume()
+        // 그룹 정보 다시 로드
+        groupData.id.let { id ->
+            db.collection("groups").document(id)
+                .get()
+                .addOnSuccessListener { document ->
+                    document.data?.let { data ->
+                        // 그룹 데이터 업데이트
+                        groupData = groupData.copy(
+                            name = data["name"] as? String ?: groupData.name,
+                            description = data["description"] as? String ?: groupData.description,
+                            imageUrl = data["imageUrl"] as? String ?: groupData.imageUrl
+                        )
+                        // 툴바 제목 업데이트
+                        toolbar.title = groupData.name
+                    }
+                }
+        }
+    }
+
     private fun setupUI(view: View) {
         // 빈 상태 뷰 설정
         emptyView = view.findViewById(R.id.emptyView)
         emptyText = view.findViewById(R.id.emptyText)
 
         // 툴바 설정
-        view.findViewById<MaterialToolbar>(R.id.toolbar).apply {
+        toolbar = view.findViewById(R.id.toolbar)
+        toolbar.apply {
             title = groupData.name
             setNavigationOnClickListener {
                 parentFragmentManager.popBackStack()
