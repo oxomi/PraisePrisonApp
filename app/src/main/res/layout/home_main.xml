@@ -11,7 +11,8 @@
         android:layout_height="wrap_content"
         android:background="@color/background"
         app:elevation="0dp"
-        android:stateListAnimator="@null">
+        android:stateListAnimator="@null"
+        app:liftOnScroll="false">
 
         <!-- Custom Toolbar -->
         <androidx.appcompat.widget.Toolbar
