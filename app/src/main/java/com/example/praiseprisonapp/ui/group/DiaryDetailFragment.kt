@@ -1,11 +1,13 @@
 package com.example.praiseprisonapp.ui.group
 
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.EditText
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -20,8 +22,15 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
+import com.google.firebase.Timestamp
+import com.example.praiseprisonapp.util.SentimentAnalyzer
 import java.text.SimpleDateFormat
 import java.util.Locale
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import androidx.lifecycle.lifecycleScope
+import androidx.appcompat.app.AlertDialog
 
 class DiaryDetailFragment : Fragment(R.layout.diary_detail) {
     private lateinit var diaryData: DiaryData
@@ -30,17 +39,20 @@ class DiaryDetailFragment : Fragment(R.layout.diary_detail) {
     private val db = FirebaseFirestore.getInstance()
     private val auth = FirebaseAuth.getInstance()
     private lateinit var tvCommentsCount: TextView
+    private lateinit var sentimentAnalyzer: SentimentAnalyzer
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         arguments?.let {
-            diaryData = it.getParcelable("diary_data", DiaryData::class.java)
+            @Suppress("DEPRECATION")
+            diaryData = it.getParcelable<DiaryData>("diary_data")
                 ?: throw IllegalArgumentException("Diary data is required")
         }
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        sentimentAnalyzer = SentimentAnalyzer.getInstance(requireContext())
 
         // 툴바 설정
         view.findViewById<MaterialToolbar>(R.id.toolbar).apply {
@@ -182,97 +194,121 @@ class DiaryDetailFragment : Fragment(R.layout.diary_detail) {
     }
 
     private fun setupCommentInput(view: View) {
-        val etComment = view.findViewById<EditText>(R.id.etComment)
-        view.findViewById<ImageButton>(R.id.btnSendComment).setOnClickListener {
-            val content = etComment.text.toString().trim()
-            if (content.isNotEmpty()) {
-                val currentUser = auth.currentUser
-                if (currentUser != null) {
-                    val comment = hashMapOf(
-                        "diaryId" to diaryData.id,
-                        "authorId" to currentUser.uid,
-                        "authorName" to currentUser.displayName,
-                        "content" to content,
-                        "createdAt" to com.google.firebase.Timestamp.now()
-                    )
+        val commentInput = view.findViewById<EditText>(R.id.etComment)
+        val sendButton = view.findViewById<ImageButton>(R.id.btnSendComment)
 
-                    db.collection("comments")
-                        .add(comment)
-                        .addOnSuccessListener { documentRef ->
-                            etComment.text.clear()
+        sendButton.setOnClickListener {
+            Log.d(TAG, "댓글 전송 버튼 클릭됨")
+            val comment = commentInput.text.toString().trim()
+            if (comment.isEmpty()) {
+                Toast.makeText(context, "댓글을 입력해주세요", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
 
-                            val currentUserId = currentUser.uid
-
-//
-                            // Firestore에서 닉네임 가져오기
-                            db.collection("users").document(currentUserId)
-                                .get()
-                                .addOnSuccessListener { userDoc ->
-                                    val nickname = userDoc.getString("nickname") ?: currentUser.displayName ?: "익명"
-
-                                    val newComment = CommentData(
-                                        id = documentRef.id,
-                                        diaryId = diaryData.id,
-                                        authorId = currentUserId,
-                                        authorName = nickname,
-                                        content = content,
-                                        createdAt = com.google.firebase.Timestamp.now()
-                                    )
-
-                                    commentList.add(newComment)
-                                    commentAdapter.notifyItemInserted(commentList.size - 1)
-                                    view.findViewById<RecyclerView>(R.id.rvComments)
-                                        .smoothScrollToPosition(commentList.size - 1)
-
-                                    db.collection("diaries").document(diaryData.id)
-                                        .update("commentCount", FieldValue.increment(1))
-                                    // UI 상 댓글 개수도 갱신
-                                    val currentCount = tvCommentsCount.text.toString()
-                                        .replace("댓글", "")
-                                        .replace("개", "")
-                                        .trim()
-                                        .toIntOrNull() ?: 0
-
-                                    tvCommentsCount.text = "댓글 ${currentCount + 1}개"
-                                }
-                        }
+            // 코루틴으로 감정 분석 수행
+            viewLifecycleOwner.lifecycleScope.launch {
+                Log.d(TAG, "댓글 감정 분석 시작")
+                val result = withContext(Dispatchers.Default) {
+                    sentimentAnalyzer.analyze(comment)
+                }
+                
+                when {
+                    // 기쁨 그룹이 아니거나 신뢰도가 낮은 경우 부정적으로 처리
+                    result.confidence < 0.1 || result.emotionGroup != SentimentAnalyzer.EmotionGroup.JOY -> {
+                        Log.d(TAG, "부정적 감정 또는 낮은 신뢰도 감지됨 (감정: ${result.emotion}, 신뢰도: ${String.format("%.1f", result.confidence * 100)}%) - 확인 다이얼로그 표시")
+                        showSentimentConfirmationDialog(comment, commentInput)
+                    }
+                    else -> {
+                        Log.d(TAG, "긍정적 감정 감지됨 - 댓글 저장 진행")
+                        saveComment(comment, commentInput)
+                    }
                 }
             }
         }
     }
 
+    private fun showSentimentConfirmationDialog(
+        comment: String,
+        commentInput: EditText
+    ) {
+        if (!isAdded) {
+            Log.w(TAG, "Fragment가 아직 추가되지 않음. 다이얼로그 표시 스킵")
+            return
+        }
+
+        val message = "부정적인 감정이 감지되었어요.\n긍정적인 말로 수정하는건 어떨까요?"
+        
+        activity?.let { activity ->
+            AlertDialog.Builder(activity)
+                .setMessage(message)
+                .setPositiveButton("네") { _, _ ->
+                    Log.d(TAG, "사용자가 텍스트 수정하기로 선택")
+                    // 댓글 입력창에 그대로 남아있게 됨 (수정 가능)
+                }
+                .setNegativeButton("아니오") { _, _ ->
+                    Log.d(TAG, "사용자가 수정하지 않고 게시하기로 선택")
+                    saveComment(comment, commentInput)
+                }
+                .show()
+        } ?: run {
+            Log.w(TAG, "Activity가 null임. 다이얼로그 표시 스킵하고 바로 저장")
+            saveComment(comment, commentInput)
+        }
+    }
+
+    private fun saveComment(comment: String, commentInput: EditText) {
+        val currentUser = FirebaseAuth.getInstance().currentUser ?: return
+        val commentData = CommentData(
+            authorId = currentUser.uid,
+            authorName = currentUser.displayName ?: "익명",
+            content = comment,
+            createdAt = Timestamp.now(),
+            diaryId = diaryData.id
+        )
+
+        db.collection("diaries").document(diaryData.id)
+            .collection("comments")
+            .add(commentData)
+            .addOnSuccessListener {
+                // 댓글 수 업데이트
+                db.collection("diaries").document(diaryData.id)
+                    .update("commentCount", FieldValue.increment(1))
+                    .addOnSuccessListener {
+                        // 댓글 저장 성공 시 UI 업데이트
+                        commentInput.text.clear()
+                        loadComments(requireView())  // 댓글 목록 새로고침
+                        // 댓글 수 UI 업데이트
+                        val newCount = (diaryData.commentCount ?: 0) + 1
+                        tvCommentsCount.text = "댓글 ${newCount}개"
+                    }
+            }
+            .addOnFailureListener { e ->
+                Toast.makeText(context, "댓글 작성에 실패했습니다: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+    }
+
     private fun loadComments(view: View) {
-        db.collection("comments")
-            .whereEqualTo("diaryId", diaryData.id)
-            .orderBy("createdAt")
+        db.collection("diaries").document(diaryData.id)
+            .collection("comments")
+            .orderBy("createdAt", Query.Direction.ASCENDING)
             .addSnapshotListener { snapshot, e ->
                 if (e != null) {
-                    // 에러 처리
+                    Log.e(TAG, "댓글 로드 중 오류 발생", e)
+                    Toast.makeText(context, "댓글을 불러오는데 실패했습니다", Toast.LENGTH_SHORT).show()
                     return@addSnapshotListener
                 }
 
                 snapshot?.let { documents ->
                     commentList.clear()
                     for (document in documents) {
-                        val comment = document.toObject(CommentData::class.java)
-
-                        // 댓글 작성자의 닉네임을 가져오기
-                        val authorId = document.getString("authorId") ?: ""
-                        if (authorId.isNotEmpty()) {
-                            db.collection("users").document(authorId)
-                                .get()
-                                .addOnSuccessListener { userDocument ->
-                                    val authorName = userDocument.getString("nickname") ?: "알 수 없음"
-                                    commentList.add(comment.copy(
-                                        id = document.id,
-                                        authorName = authorName
-                                    ))
-                                    commentAdapter.notifyDataSetChanged()
-                                }
-                        } else {
+                        try {
+                            val comment = document.toObject(CommentData::class.java).copy(id = document.id)
                             commentList.add(comment)
+                        } catch (e: Exception) {
+                            Log.e(TAG, "댓글 파싱 중 오류 발생", e)
                         }
                     }
+                    commentList.sortBy { it.createdAt }
                     commentAdapter.notifyDataSetChanged()
                 }
             }
@@ -284,5 +320,7 @@ class DiaryDetailFragment : Fragment(R.layout.diary_detail) {
                 putParcelable("diary_data", diaryData)
             }
         }
+
+        private const val TAG = "DiaryDetailFragment"
     }
 }

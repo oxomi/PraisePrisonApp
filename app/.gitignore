@@ -30,3 +30,6 @@ google-services.json
 praiseprisonapp-firebase-adminsdk-fbsvc-4432d541d7.json
 praiseprisonapp-firebase-adminsdk-fbsvc-*.json
 *firebase-adminsdk*.json
+
+# TFLite models
+src/main/assets/sentiment_model_improved.tflite
