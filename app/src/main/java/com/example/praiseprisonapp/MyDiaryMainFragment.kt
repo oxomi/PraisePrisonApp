@@ -221,7 +221,8 @@ class MyDiaryMainFragment : Fragment(R.layout.mydiary_main) {
                                     createdAt = data["createdAt"] as? Timestamp ?: Timestamp.now(),
                                     groupId = data["groupId"] as? String ?: "",
                                     imageUrl = data["imageUrl"] as? String,
-                                    mood = data["mood"] as? String ?: ""
+                                    mood = data["mood"] as? String ?: "",
+                                    weatherType = (data["weatherType"] as? Long)?.toInt() ?: 1
                                 ).also {
                                     // Firestore 문서도 업데이트
                                     if (data["authorName"] == null) {

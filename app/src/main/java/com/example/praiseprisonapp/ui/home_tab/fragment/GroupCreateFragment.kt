@@ -46,6 +46,7 @@ class GroupCreateFragment : Fragment(R.layout.group_create) {
     private lateinit var createButton: com.google.android.material.button.MaterialButton
     private val groupRepository = GroupRepository()
     private var tempPhotoUri: Uri? = null
+    private lateinit var progressBar: View
 
     // 갤러리 실행 결과 처리
     private val galleryLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -96,6 +97,8 @@ class GroupCreateFragment : Fragment(R.layout.group_create) {
         passwordLayout = view.findViewById(R.id.passwordLayout)
         passwordInput = view.findViewById(R.id.passwordInput)
         createButton = view.findViewById(R.id.createButton)
+        progressBar = view.findViewById(R.id.progressBar)
+
 
         visibilityGroup.setOnCheckedChangeListener { _, checkedId ->
             passwordLayout.isVisible = checkedId == R.id.privateGroup
@@ -118,6 +121,12 @@ class GroupCreateFragment : Fragment(R.layout.group_create) {
             handleGroupCreation()
         }
     }
+
+    private fun showLoading(isLoading: Boolean) {
+        progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
+        createButton.isEnabled = !isLoading
+    }
+
 
     private fun handleGroupCreation() {
         val groupName = groupNameInput.text.toString().trim()
@@ -146,6 +155,7 @@ class GroupCreateFragment : Fragment(R.layout.group_create) {
 
         // 버튼 비활성화
         createButton.isEnabled = false
+        showLoading(true)
 
         // 코루틴으로 그룹 생성
         lifecycleScope.launch {
@@ -189,11 +199,13 @@ class GroupCreateFragment : Fragment(R.layout.group_create) {
                     // 그룹 생성 실패
                     Toast.makeText(requireContext(), "그룹 생성에 실패했습니다: ${exception.message}", Toast.LENGTH_SHORT).show()
                     createButton.isEnabled = true
+                    showLoading(false)
                 }
             } catch (e: Exception) {
                 // 예외 발생
                 Toast.makeText(requireContext(), "오류가 발생했습니다: ${e.message}", Toast.LENGTH_SHORT).show()
                 createButton.isEnabled = true
+                showLoading(false)
             }
         }
     }

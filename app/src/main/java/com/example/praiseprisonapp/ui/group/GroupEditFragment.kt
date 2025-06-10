@@ -35,7 +35,9 @@ class GroupEditFragment : Fragment() {
     private var currentImageUrl: String? = null
     private var isImageChanged = false
     private var tempPhotoUri: Uri? = null
-    
+    private lateinit var progressBar: View
+
+
     // 갤러리 실행 결과 처리
     private val galleryLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
@@ -92,10 +94,15 @@ class GroupEditFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        
+        progressBar = binding.progressBar
+
         setupUI()
         loadGroupData()
         setupListeners()
+    }
+    private fun showLoading(isLoading: Boolean) {
+        progressBar.isVisible = isLoading
+        binding.updateButton.isEnabled = !isLoading
     }
 
     private fun setupUI() {
@@ -264,6 +271,8 @@ class GroupEditFragment : Fragment() {
     private fun updateGroupInfo() {
         // 업로드 버튼 비활성화
         binding.updateButton.isEnabled = false
+        //로딩 시작
+        showLoading(true)
         
         if (!isImageChanged) {
             // 이미지가 변경되지 않은 경우 바로 Firestore 업데이트
@@ -299,11 +308,13 @@ class GroupEditFragment : Fragment() {
                             .addOnFailureListener { e ->
                                 handleError("이미지 URL 가져오기 실패: ${e.message}", e)
                                 binding.updateButton.isEnabled = true
+                                showLoading(false)
                             }
                     }
                     .addOnFailureListener { e ->
                         handleError("이미지 업로드 실패: ${e.message}", e)
                         binding.updateButton.isEnabled = true
+                        showLoading(false)
                     }
 
                 // Bitmap 메모리 해제
@@ -313,6 +324,7 @@ class GroupEditFragment : Fragment() {
             } catch (e: Exception) {
                 handleError("이미지 처리 실패: ${e.message}", e)
                 binding.updateButton.isEnabled = true
+                showLoading(false)
             }
         } ?: updateFirestore(getUpdates()) // selectedImageUri가 null인 경우
     }
@@ -369,10 +381,12 @@ class GroupEditFragment : Fragment() {
                 .update(updates)
                 .addOnSuccessListener {
                     Toast.makeText(context, "그룹 정보가 수정되었습니다", Toast.LENGTH_SHORT).show()
+                    showLoading(false)
                     parentFragmentManager.popBackStack()
                 }
                 .addOnFailureListener {
                     binding.updateButton.isEnabled = true
+                    showLoading(false)
                     Toast.makeText(context, "그룹 정보 수정 실패", Toast.LENGTH_SHORT).show()
                 }
         }

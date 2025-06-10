@@ -47,6 +47,7 @@ import java.text.SimpleDateFormat
 import java.util.*
 import kotlinx.coroutines.launch
 import android.location.Geocoder
+import androidx.core.view.isVisible
 import com.example.praiseprisonapp.data.api.WeatherData
 
 import com.google.android.gms.tasks.CancellationTokenSource
@@ -74,6 +75,8 @@ class DiaryWriteFragment : Fragment() {
     private var selectedMood: String? = null
     private var currentWeatherInfo: WeatherInfo? = null
     private lateinit var groupId: String
+    private lateinit var progressBar: View
+
 
     private val requestLocationPermission = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -161,6 +164,8 @@ class DiaryWriteFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        progressBar = binding.progressBar
+
         setupToolbar()
         loadAdvice()
         setupMoodSelection()
@@ -581,6 +586,10 @@ class DiaryWriteFragment : Fragment() {
             saveDiary()
         }
     }
+    private fun showLoading(isLoading: Boolean) {
+        progressBar.isVisible = isLoading
+        binding.sendButton.isEnabled = !isLoading
+    }
 
     private fun saveDiary() {
         val content = binding.etContent.text.toString().trim()
@@ -594,6 +603,7 @@ class DiaryWriteFragment : Fragment() {
             Toast.makeText(context, "오늘의 감정을 선택해주세요", Toast.LENGTH_SHORT).show()
             return
         }
+        showLoading(true)
 
         // 버튼 비활성화
         binding.sendButton.isEnabled = false
@@ -620,6 +630,7 @@ class DiaryWriteFragment : Fragment() {
                     Log.d("FirebaseStorage", "Storage ref: ${imageRef.path} | ${imageRef.bucket}")
                     Toast.makeText(context, "이미지 업로드 실패", Toast.LENGTH_SHORT).show()
                     binding.sendButton.isEnabled = true
+                    showLoading(false)
                 }
         }
     }
@@ -645,12 +656,14 @@ class DiaryWriteFragment : Fragment() {
         diaryRef.set(diary)
             .addOnSuccessListener {
                 Toast.makeText(context, "일기가 저장되었습니다.", Toast.LENGTH_SHORT).show()
+                showLoading(false)
                 parentFragmentManager.popBackStack()
             }
             .addOnFailureListener { e ->
                 Log.e("PraisePrison", "일기 저장 실패", e)
                 Toast.makeText(context, "일기 저장에 실패했습니다.", Toast.LENGTH_SHORT).show()
                 binding.sendButton.isEnabled = true
+                showLoading(false)
             }
     }
 
