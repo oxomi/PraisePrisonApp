@@ -22,7 +22,7 @@
 
     <!-- Diary backgrounds -->
     <color name="my_diary_background">#E3F2FD</color>
-    <color name="other_diary_background">#FFFCF4</color>
+    <color name="other_diary_background">#FFFAEE</color>
     <color name="stroke_color">#E0E0E0</color>
 
     <color name="beigedark">#EEDFC5</color>

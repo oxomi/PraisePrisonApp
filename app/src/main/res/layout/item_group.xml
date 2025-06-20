@@ -41,6 +41,24 @@
             app:layout_constraintTop_toTopOf="@id/ivGroupImage"
             app:layout_constraintStart_toStartOf="@id/ivGroupImage" />
 
+        <!-- Badge: 방장 -->
+        <TextView
+            android:id="@+id/tvOwnerBadge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:background="@drawable/bg_badge_owner"
+            android:paddingHorizontal="8dp"
+            android:paddingVertical="4dp"
+            android:text="방장"
+            android:textColor="@color/white"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="@+id/tvMyGroupBadge"
+            app:layout_constraintStart_toEndOf="@+id/tvMyGroupBadge"
+            app:layout_constraintTop_toTopOf="@+id/tvMyGroupBadge" />
+
         <!-- Badge: 공개 여부 -->
         <TextView
             android:id="@+id/tvVisibilityBadge"

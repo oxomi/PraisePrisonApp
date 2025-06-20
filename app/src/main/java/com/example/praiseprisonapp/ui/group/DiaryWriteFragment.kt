@@ -648,11 +648,13 @@ class DiaryWriteFragment : Fragment() {
         activity?.let { activity ->
             AlertDialog.Builder(activity)
                 .setMessage(message)
-                .setPositiveButton("네") { _, _ ->
+                // 안드로이드 기본 다이얼로그는 Negative-Positive 순으로 버튼을 배치합니다.
+                // UI상 '네' 버튼을 왼쪽에, '아니오' 버튼을 오른쪽에 두기 위해 역할을 교체합니다.
+                .setNegativeButton("네") { _, _ ->
                     Log.d(TAG, "사용자가 텍스트 수정하기로 선택")
                     // 작성 화면에 그대로 남아있게 됨 (수정 가능)
                 }
-                .setNegativeButton("아니오") { _, _ ->
+                .setPositiveButton("아니오") { _, _ ->
                     Log.d(TAG, "사용자가 수정하지 않고 게시하기로 선택")
                     saveDiary()
                 }

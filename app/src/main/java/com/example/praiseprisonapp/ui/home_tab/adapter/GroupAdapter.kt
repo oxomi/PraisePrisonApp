@@ -13,6 +13,7 @@ import com.example.praiseprisonapp.R
 import com.example.praiseprisonapp.data.model.GroupData
 import com.example.praiseprisonapp.ui.group.GroupDetailFragment
 import com.google.android.material.card.MaterialCardView
+import com.google.firebase.auth.FirebaseAuth
 
 class GroupAdapter(private var groupList: List<GroupData>) : RecyclerView.Adapter<GroupAdapter.GroupViewHolder>() {
 
@@ -32,6 +33,7 @@ class GroupAdapter(private var groupList: List<GroupData>) : RecyclerView.Adapte
         val tvMemberCount: TextView = itemView.findViewById(R.id.tvMemberCount)
         val tvMyGroupBadge: TextView = itemView.findViewById(R.id.tvMyGroupBadge)
         val tvVisibilityBadge: TextView = itemView.findViewById(R.id.tvVisibilityBadge)
+        val tvOwnerBadge: TextView = itemView.findViewById(R.id.tvOwnerBadge)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): GroupViewHolder {
@@ -59,6 +61,10 @@ class GroupAdapter(private var groupList: List<GroupData>) : RecyclerView.Adapte
             } else {
                 holder.ivGroupImage.setImageResource(R.drawable.groupimage_example)
             }
+
+            // 방장 뱃지 표시
+            val currentUser = FirebaseAuth.getInstance().currentUser
+            holder.tvOwnerBadge.visibility = if (group.createdBy == currentUser?.uid) View.VISIBLE else View.GONE
 
             // 내 그룹 뱃지 표시
             holder.tvMyGroupBadge.visibility = if (group.isMyGroup) View.VISIBLE else View.GONE
