@@ -9,7 +9,9 @@
         android:id="@+id/searchLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="16dp"
+        android:layout_marginHorizontal="28dp"
+        android:layout_marginTop="0dp"
+        android:layout_marginBottom="16dp"
         android:paddingBottom="8dp"
         android:background="@null"
         app:boxBackgroundColor="@color/background"
@@ -37,7 +39,9 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:clipToPadding="false"
-        android:padding="16dp"
+        android:paddingTop="0dp"
+        android:paddingHorizontal="16dp"
+        android:paddingBottom="16dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintTop_toBottomOf="@id/searchLayout" />
 

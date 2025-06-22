@@ -34,56 +34,34 @@
 
         </androidx.appcompat.widget.Toolbar>
 
-        <!-- Segmented Control: MaterialButtonToggleGroup -->
-        <!-- 배경을 감싸는 CardView 또는 FrameLayout으로 라운드 처리 -->
+        <!-- Segmented Control using TabLayout in a CardView -->
         <androidx.cardview.widget.CardView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="0dp"
             android:layout_marginBottom="16dp"
             app:cardCornerRadius="24dp"
             app:cardElevation="0dp"
-            app:cardBackgroundColor="#EDEDED">
+            app:cardBackgroundColor="#EDEDED"
+            app:contentPadding="4dp">
 
-            <com.google.android.material.button.MaterialButtonToggleGroup
-                android:id="@+id/toggleGroup"
+            <com.google.android.material.tabs.TabLayout
+                android:id="@+id/tabLayout"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:padding="4dp"
-                app:singleSelection="true"
-                app:selectionRequired="true"
-                app:checkedButton="@id/btnMyGroup">
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnMyGroup"
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:minWidth="100dp"
-                    android:text="내 그룹"
-                    android:textSize="14sp"
-                    android:textColor="@color/textPrimary"
-                    android:backgroundTint="@android:color/transparent"
-                    app:cornerRadius="20dp"
-                    app:rippleColor="@android:color/transparent"
-                    app:strokeWidth="0dp"
-                    android:elevation="0dp" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnAllGroup"
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:minWidth="100dp"
-                    android:text="전체 그룹"
-                    android:textSize="14sp"
-                    android:textColor="@color/textPrimary"
-                    android:backgroundTint="@android:color/transparent"
-                    app:cornerRadius="20dp"
-                    app:rippleColor="@android:color/transparent"
-                    app:strokeWidth="0dp"
-                    android:elevation="0dp" />
-
-            </com.google.android.material.button.MaterialButtonToggleGroup>
+                android:layout_height="40dp"
+                android:minWidth="220dp"
+                android:background="@android:color/transparent"
+                app:tabGravity="fill"
+                app:tabMode="fixed"
+                app:tabIndicatorAnimationMode="elastic"
+                app:tabIndicatorGravity="stretch"
+                app:tabIndicator="@drawable/bg_content_white"
+                app:tabIndicatorColor="@color/white"
+                app:tabIndicatorFullWidth="true"
+                app:tabRippleColor="@android:color/transparent"
+                app:tabSelectedTextColor="@color/textPrimary"
+                app:tabTextColor="@color/textSecondary" />
         </androidx.cardview.widget.CardView>
 
     </com.google.android.material.appbar.AppBarLayout>
