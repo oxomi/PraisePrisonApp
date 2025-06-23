@@ -72,6 +72,9 @@ class DiaryDetailFragment : Fragment(R.layout.diary_detail) {
 
         // 댓글 데이터 로드
         loadComments(view)
+        
+        // 댓글 수 실시간 업데이트 리스너 추가
+        setupCommentCountListener()
     }
 
     private fun setupDiaryContent(view: View) {
@@ -186,11 +189,38 @@ class DiaryDetailFragment : Fragment(R.layout.diary_detail) {
 
     private fun setupComments(view: View) {
         val rvComments = view.findViewById<RecyclerView>(R.id.rvComments)
-        commentAdapter = CommentAdapter(commentList)
+        commentAdapter = CommentAdapter(
+            commentList = commentList,
+            diaryAuthorId = diaryData.authorId,
+            onDeleteComment = { comment -> deleteComment(comment) }
+        )
         rvComments.apply {
             layoutManager = LinearLayoutManager(context)
             adapter = commentAdapter
         }
+    }
+
+    private fun deleteComment(comment: CommentData) {
+        // 삭제 확인 다이얼로그 표시
+        AlertDialog.Builder(requireContext())
+            .setTitle("댓글 삭제")
+            .setMessage("이 댓글을 삭제하시겠습니까?")
+            .setPositiveButton("삭제") { _, _ ->
+                // 댓글 삭제 실행
+                db.collection("diaries").document(diaryData.id)
+                    .collection("comments")
+                    .document(comment.id)
+                    .delete()
+                    .addOnSuccessListener {
+                        Toast.makeText(context, "댓글이 삭제되었습니다.", Toast.LENGTH_SHORT).show()
+                        // 댓글 수는 실시간 리스너가 자동으로 업데이트함
+                    }
+                    .addOnFailureListener { e ->
+                        Toast.makeText(context, "댓글 삭제에 실패했습니다: ${e.message}", Toast.LENGTH_SHORT).show()
+                    }
+            }
+            .setNegativeButton("취소", null)
+            .show()
     }
 
     private fun setupCommentInput(view: View) {
@@ -213,9 +243,14 @@ class DiaryDetailFragment : Fragment(R.layout.diary_detail) {
                 }
                 
                 when {
-                    // 기쁨 그룹이 아니거나 신뢰도가 낮은 경우 부정적으로 처리
-                    result.confidence < 0.1 || result.emotionGroup != SentimentAnalyzer.EmotionGroup.JOY -> {
-                        Log.d(TAG, "부정적 감정 또는 낮은 신뢰도 감지됨 (감정: ${result.emotion}, 신뢰도: ${String.format("%.1f", result.confidence * 100)}%) - 확인 다이얼로그 표시")
+                    // 신뢰도가 낮은 경우 바로 저장
+                    result.confidence < 0.1 -> {
+                        Log.d(TAG, "낮은 신뢰도 감지됨 (신뢰도: ${String.format("%.1f", result.confidence * 100)}%) - 바로 저장")
+                        saveComment(comment, commentInput)
+                    }
+                    // 기쁨 그룹이 아닌 경우 부정적으로 처리
+                    result.emotionGroup != SentimentAnalyzer.EmotionGroup.JOY -> {
+                        Log.d(TAG, "부정적 감정 감지됨 (감정: ${result.emotion}, 신뢰도: ${String.format("%.1f", result.confidence * 100)}%) - 확인 다이얼로그 표시")
                         showSentimentConfirmationDialog(comment, commentInput)
                     }
                     else -> {
@@ -260,32 +295,35 @@ class DiaryDetailFragment : Fragment(R.layout.diary_detail) {
 
     private fun saveComment(comment: String, commentInput: EditText) {
         val currentUser = FirebaseAuth.getInstance().currentUser ?: return
-        val commentData = CommentData(
-            authorId = currentUser.uid,
-            authorName = currentUser.displayName ?: "익명",
-            content = comment,
-            createdAt = Timestamp.now(),
-            diaryId = diaryData.id
-        )
+        
+        // 사용자의 닉네임 가져오기
+        db.collection("users").document(currentUser.uid)
+            .get()
+            .addOnSuccessListener { userDoc ->
+                val nickname = userDoc.getString("nickname") ?: "익명"
+                
+                val commentData = CommentData(
+                    authorId = currentUser.uid,
+                    authorName = nickname,
+                    content = comment,
+                    createdAt = Timestamp.now(),
+                    diaryId = diaryData.id
+                )
 
-        db.collection("diaries").document(diaryData.id)
-            .collection("comments")
-            .add(commentData)
-            .addOnSuccessListener {
-                // 댓글 수 업데이트
                 db.collection("diaries").document(diaryData.id)
-                    .update("commentCount", FieldValue.increment(1))
+                    .collection("comments")
+                    .add(commentData)
                     .addOnSuccessListener {
                         // 댓글 저장 성공 시 UI 업데이트
                         commentInput.text.clear()
-                        loadComments(requireView())  // 댓글 목록 새로고침
-                        // 댓글 수 UI 업데이트
-                        val newCount = (diaryData.commentCount ?: 0) + 1
-                        tvCommentsCount.text = "댓글 ${newCount}개"
+                        // 댓글 수는 실시간 리스너가 자동으로 업데이트함
+                    }
+                    .addOnFailureListener { e ->
+                        Toast.makeText(context, "댓글 작성에 실패했습니다: ${e.message}", Toast.LENGTH_SHORT).show()
                     }
             }
             .addOnFailureListener { e ->
-                Toast.makeText(context, "댓글 작성에 실패했습니다: ${e.message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "사용자 정보를 가져오는데 실패했습니다: ${e.message}", Toast.LENGTH_SHORT).show()
             }
     }
 
@@ -313,6 +351,24 @@ class DiaryDetailFragment : Fragment(R.layout.diary_detail) {
                     commentList.sortBy { it.createdAt }
                     commentAdapter.notifyDataSetChanged()
                 }
+            }
+    }
+
+    private fun setupCommentCountListener() {
+        // 댓글 수 실시간 업데이트
+        db.collection("diaries").document(diaryData.id)
+            .collection("comments")
+            .addSnapshotListener { snapshot, e ->
+                if (e != null) {
+                    Log.e(TAG, "댓글 수 리스너 오류", e)
+                    return@addSnapshotListener
+                }
+                
+                val commentCount = snapshot?.documents?.size ?: 0
+                tvCommentsCount.text = "댓글 ${commentCount}개"
+                
+                // diaryData 객체도 업데이트
+                diaryData = diaryData.copy(commentCount = commentCount)
             }
     }
 

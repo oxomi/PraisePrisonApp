@@ -41,14 +41,16 @@ class GroupDetailFragment : Fragment(R.layout.group_detail) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        setupUI(view)
+        
         // 현재 사용자가 그룹의 멤버인지 확인
         val currentUser = auth.currentUser
         if (currentUser != null && !groupData.members.contains(currentUser.uid)) {
             showJoinGroupDialog()
+        } else {
+            // 그룹 멤버인 경우에만 일기 목록 로드
+            loadDiaries()
         }
-
-        setupUI(view)
-        loadDiaries()
     }
 
     override fun onResume() {
@@ -124,7 +126,14 @@ class GroupDetailFragment : Fragment(R.layout.group_detail) {
             }
         }
 
-        updateEmptyView(true)
+        // 그룹 멤버가 아닌 경우 가입 안내 메시지 표시
+        val currentUser = auth.currentUser
+        if (currentUser != null && !groupData.members.contains(currentUser.uid)) {
+            emptyView.visibility = View.VISIBLE
+            emptyText.text = "이 그룹의 일기를 보려면 가입해주세요."
+        } else {
+            updateEmptyView(true)
+        }
     }
 
     private fun updateEmptyView(showEmpty: Boolean) {
@@ -206,6 +215,8 @@ class GroupDetailFragment : Fragment(R.layout.group_detail) {
             groupData = groupData.copy(members = groupData.members + currentUser.uid)
             // UI 업데이트
             view?.findViewById<FloatingActionButton>(R.id.fabAddDiary)?.visibility = View.VISIBLE
+            // 그룹 가입 후 일기 목록 로드
+            loadDiaries()
         }.addOnFailureListener { e ->
             Log.e("GroupDetailFragment", "그룹 가입에 실패했습니다: ${e.message}", e)
             Toast.makeText(requireContext(), "그룹 가입에 실패했습니다: ${e.message}", Toast.LENGTH_SHORT).show()
@@ -240,9 +251,10 @@ class GroupDetailFragment : Fragment(R.layout.group_detail) {
                     if (diary != null) {
                         diaryList.add(diary)
 
-                        // 각 일기의 댓글 수를 실시간으로 가져오기
-                        db.collection("comments")
-                            .whereEqualTo("diaryId", diary.id)
+                        // 각 일기의 댓글 수를 실시간으로 가져오기 (서브컬렉션 사용)
+                        db.collection("diaries")
+                            .document(diary.id)
+                            .collection("comments")
                             .addSnapshotListener { commentsSnapshot, commentsError ->
                                 if (commentsError != null) {
                                     Log.e("GroupDetailFragment", "댓글 수 로드 실패: ${commentsError.message}", commentsError)

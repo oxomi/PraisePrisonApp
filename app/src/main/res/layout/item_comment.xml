@@ -7,13 +7,34 @@
     android:layout_marginVertical="4dp"
     android:background="@drawable/bg_content_white">
 
-    <!-- Author Name -->
-    <TextView
-        android:id="@+id/tvCommentAuthor"
-        android:layout_width="wrap_content"
+    <!-- Author Name and Delete Button Row -->
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        style="@style/CustomContentTextStyle"
-        android:textSize="14sp" />
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <!-- Author Name -->
+        <TextView
+            android:id="@+id/tvCommentAuthor"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            style="@style/CustomContentTextStyle"
+            android:textSize="14sp" />
+
+        <!-- Delete Button (only visible for my comments) -->
+        <ImageButton
+            android:id="@+id/btnDeleteComment"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="댓글 삭제"
+            android:src="@drawable/ic_close"
+            android:visibility="gone"
+            android:padding="4dp" />
+
+    </LinearLayout>
 
     <!-- Comment Content -->
     <TextView
